@@ -1,10 +1,7 @@
 <!-- Event Form Modal -->
-<div x-data="{ show: false }" 
-     @open-event-modal.window="show = true"
-     @close-event-modal.window="show = false"
-     x-show="show"
+<div x-show="showModal"
      class="modal" 
-     :class="{ 'modal-open': show }">
+     :class="{ 'modal-open': showModal }">
     <div class="modal-box w-11/12 max-w-2xl">
         <h3 class="font-bold text-lg mb-4" x-text="editingEvent ? 'Edit Event' : 'Create New Event'"></h3>
         
@@ -73,12 +70,12 @@
             
             <!-- Modal Actions -->
             <div class="modal-action">
-                <button type="button" class="btn" @click="$dispatch('close-event-modal')">Cancel</button>
+                <button type="button" class="btn" @click="showModal = false">Cancel</button>
                 <button type="submit" class="btn btn-primary">
                     <span x-text="editingEvent ? 'Update Event' : 'Create Event'"></span>
                 </button>
             </div>
         </form>
     </div>
-    <label class="modal-backdrop" @click="$dispatch('close-event-modal')"></label>
+    <label class="modal-backdrop" @click="showModal = false"></label>
 </div>

@@ -150,7 +150,7 @@ function teamsManager() {
                 team_name: '',
                 event_id: ''
             };
-            window.dispatchEvent(new CustomEvent('open-team-modal'));
+            this.showModal = true;
         },
         
         openEditModal(team) {
@@ -159,7 +159,7 @@ function teamsManager() {
                 team_name: team.team_name,
                 event_id: team.event_id
             };
-            window.dispatchEvent(new CustomEvent('open-team-modal'));
+            this.showModal = true;
         },
         
         async saveTeam() {
@@ -178,7 +178,7 @@ function teamsManager() {
                 if (response.ok) {
                     showAlert(`Team ${this.editingTeam ? 'updated' : 'created'} successfully`, 'success');
                     this.fetchData();
-                    window.dispatchEvent(new CustomEvent('close-team-modal'));
+                    this.showModal = false;
                 } else {
                     const error = await response.json();
                     showAlert(error.error || 'Error saving team', 'error');

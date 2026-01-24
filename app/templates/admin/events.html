@@ -171,7 +171,7 @@ function eventsManager() {
                 mode: 'solo',
                 passcode: ''
             };
-            window.dispatchEvent(new CustomEvent('open-event-modal'));
+            this.showModal = true;
         },
         
         openEditModal(event) {
@@ -183,7 +183,7 @@ function eventsManager() {
                 mode: event.mode,
                 passcode: event.passcode || ''
             };
-            window.dispatchEvent(new CustomEvent('open-event-modal'));
+            this.showModal = true;
         },
         
         async saveEvent() {
@@ -202,7 +202,7 @@ function eventsManager() {
                 if (response.ok) {
                     showAlert(`Event ${this.editingEvent ? 'updated' : 'created'} successfully`, 'success');
                     this.fetchEvents();
-                    window.dispatchEvent(new CustomEvent('close-event-modal'));
+                    this.showModal = false;
                 } else {
                     const error = await response.json();
                     showAlert(error.error || 'Error saving event', 'error');
