@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}QR Scanner - GateKeeper{% endblock %}
+
+{% block content %}
+<div x-data="qrScanner()" class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">QR Code Scanner</h1>
+    
+    <!-- Scanner Controls -->
+    <div class="card bg-base-100 shadow-xl mb-4">
+        <div class="card-body">
+            <div class="form-control">
+                <label class="label cursor-pointer">
+                    <span class="label-text">Quick Scan Mode (Auto check-in)</span>
+                    <input type="checkbox" class="toggle" x-model="quickScanMode">
+                </label>
+            </div>
+            
+            <button 
+                class="btn btn-primary" 
+                @click="startScanner()"
+                x-show="!scannerActive"
+            >
+                Start Scanner
+            </button>
+            
+            <button 
+                class="btn btn-error" 
+                @click="stopScanner()"
+                x-show="scannerActive"
+            >
+                Stop Scanner
+            </button>
+        </div>
+    </div>
+    
+    <!-- Video Preview -->
+    <div class="card bg-base-100 shadow-xl mb-4" x-show="scannerActive">
+        <div class="card-body">
+            <video id="scanner-video" class="w-full rounded" autoplay></video>
+        </div>
+    </div>
+    
+    <!-- Participant Info -->
+    <div class="card bg-base-100 shadow-xl" x-show="participantData">
+        <div class="card-body">
+            <h2 class="card-title">Participant Information</h2>
+            
+            <template x-if="participantData">
+                <div>
+                    <p><strong>Name:</strong> <span x-text="participantData.name"></span></p>
+                    <p><strong>Email:</strong> <span x-text="participantData.email"></span></p>
+                    <p><strong>Event:</strong> <span x-text="participantData.event.name"></span></p>
+                    
+                    <template x-if="participantData.team">
+                        <p><strong>Team:</strong> <span x-text="participantData.team.team_name"></span></p>
+                    </template>
+                    
+                    <template x-if="participantData.attendance_status">
+                        <div class="alert alert-success mt-4">
+                            <span>Already checked in at: <span x-text="participantData.attended_at"></span></span>
+                        </div>
+                    </template>
+                    
+                    <template x-if="!participantData.attendance_status && !quickScanMode">
+                        <button 
+                            class="btn btn-success mt-4" 
+                            @click="confirmCheckin()"
+                        >
+                            Mark as Attended
+                        </button>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+function qrScanner() {
+    return {
+        scannerActive: false,
+        quickScanMode: false,
+        participantData: null,
+        video: null,
+        canvasElement: null,
+        canvas: null,
+        
+        startScanner() {
+            this.scannerActive = true;
+            this.video = document.getElementById('scanner-video');
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => {
+                    this.video.srcObject = stream;
+                    this.video.setAttribute('playsinline', true);
+                    this.video.play();
+                    requestAnimationFrame(() => this.tick());
+                })
+                .catch(err => {
+                    alert('Error accessing camera: ' + err);
+                    this.scannerActive = false;
+                });
+        },
+        
+        stopScanner() {
+            this.scannerActive = false;
+            if (this.video && this.video.srcObject) {
+                this.video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        },
+        
+        tick() {
+            if (!this.scannerActive) return;
+            
+            if (this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
+                if (!this.canvasElement) {
+                    this.canvasElement = document.createElement('canvas');
+                    this.canvas = this.canvasElement.getContext('2d');
+                }
+                
+                this.canvasElement.height = this.video.videoHeight;
+                this.canvasElement.width = this.video.videoWidth;
+                this.canvas.drawImage(this.video, 0, 0, this.canvasElement.width, this.canvasElement.height);
+                
+                const imageData = this.canvas.getImageData(0, 0, this.canvasElement.width, this.canvasElement.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert',
+                });
+                
+                if (code) {
+                    this.handleQRCode(code.data);
+                }
+            }
+            
+            requestAnimationFrame(() => this.tick());
+        },
+        
+        async handleQRCode(qrData) {
+            // Extract UUID from URL
+            const uuidMatch = qrData.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+            if (!uuidMatch) return;
+            
+            const uuid = uuidMatch[0];
+            
+            // Lookup participant
+            try {
+                const response = await fetch(`/api/checkin/lookup/${uuid}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                
+                if (response.ok) {
+                    this.participantData = await response.json();
+                    
+                    // Auto check-in if quick scan mode
+                    if (this.quickScanMode && !this.participantData.attendance_status) {
+                        await this.confirmCheckin();
+                    }
+                }
+            } catch (err) {
+                console.error('Error looking up participant:', err);
+            }
+        },
+        
+        async confirmCheckin() {
+            try {
+                const response = await fetch('/api/checkin/confirm', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    },
+                    body: JSON.stringify({
+                        unique_uuid: this.participantData.unique_url_uuid
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('Check-in successful!');
+                    this.participantData.attendance_status = true;
+                    this.participantData.attended_at = result.attended_at;
+                }
+            } catch (err) {
+                alert('Error confirming check-in: ' + err);
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

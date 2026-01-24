@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket - {{ participant.name }} - GateKeeper{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">{{ event.name }}</h2>
+            
+            <div class="divider"></div>
+            
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Participant</p>
+                    <p class="text-lg font-semibold">{{ participant.name }}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-600">Email</p>
+                    <p>{{ participant.email }}</p>
+                </div>
+                
+                {% if participant.team %}
+                <div>
+                    <p class="text-sm text-gray-600">Team</p>
+                    <p>{{ participant.team.team_name }} (ID: {{ participant.team.id }})</p>
+                </div>
+                {% endif %}
+                
+                {% if participant.t_shirt_size %}
+                <div>
+                    <p class="text-sm text-gray-600">T-Shirt Size</p>
+                    <p>{{ participant.t_shirt_size }}</p>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <p class="text-sm text-gray-600">Event Date</p>
+                    <p>{{ event.date.strftime('%B %d, %Y') }}</p>
+                </div>
+                
+                {% if event.venue %}
+                <div>
+                    <p class="text-sm text-gray-600">Venue</p>
+                    <p>{{ event.venue }}</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="divider"></div>
+            
+            {% if participant.attendance_status %}
+            <div class="alert alert-success">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>Checked in at: {{ participant.attended_at.strftime('%B %d, %Y %I:%M %p') }}</span>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Not yet checked in</span>
+            </div>
+            {% endif %}
+            
+            <div class="card-actions justify-end mt-4">
+                <a href="/api/tickets/download/{{ participant.unique_url_uuid }}" class="btn btn-primary">
+                    Download Ticket PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
