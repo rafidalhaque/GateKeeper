@@ -14,12 +14,6 @@ def index():
     return render_template('base.html', show_nav=True)
 
 
-@bp.route('/scanner')
-def scanner():
-    """QR scanner page"""
-    return render_template('scanner.html', show_nav=True)
-
-
 @bp.route('/ticket/<uuid:unique_uuid>')
 def ticket(unique_uuid):
     """Public ticket view page"""
@@ -40,6 +34,12 @@ def ticket(unique_uuid):
 def admin_dashboard():
     """Admin dashboard home"""
     return render_template('admin/dashboard.html')
+
+
+@bp.route('/admin/scanner')
+def admin_scanner():
+    """QR scanner page (admin)"""
+    return render_template('scanner.html', show_nav=True)
 
 
 @bp.route('/admin/events')
