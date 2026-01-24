@@ -30,6 +30,12 @@ def ticket(unique_uuid):
 
 
 # Admin Routes
+# NOTE: Authentication is handled client-side via JWT tokens stored in localStorage.
+# The Alpine.js components use authFetch() which adds the Authorization header.
+# For production, consider adding server-side authentication middleware that:
+# 1. Checks for tokens in cookies/session instead of requiring client-side headers
+# 2. Redirects to login page instead of returning 401 JSON responses
+# Example: @login_required decorator could be adapted to work with HTML routes
 @bp.route('/admin')
 def admin_dashboard():
     """Admin dashboard home"""

@@ -1,26 +1,11 @@
 /**
  * Admin Dashboard Shared Functions
  * Common Alpine.js utilities and helpers
+ * 
+ * Note: Core functions like authFetch, showAlert, and handleLogout
+ * are defined in admin/base.html to ensure they're available on every page.
+ * This file contains additional utility functions.
  */
-
-// Global authentication wrapper for fetch requests
-window.authFetch = function(url, options = {}) {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-        options.headers = {
-            ...options.headers,
-            'Authorization': `Bearer ${token}`
-        };
-    }
-    return fetch(url, options);
-};
-
-// Global alert function
-window.showAlert = function(message, type = 'success') {
-    window.dispatchEvent(new CustomEvent('show-alert', {
-        detail: { message, type }
-    }));
-};
 
 // Date formatting helper
 window.formatDate = function(dateString) {
@@ -34,12 +19,6 @@ window.formatDate = function(dateString) {
 // DateTime formatting helper
 window.formatDateTime = function(dateString) {
     return new Date(dateString).toLocaleString('en-US');
-};
-
-// Handle logout
-window.handleLogout = function() {
-    localStorage.removeItem('access_token');
-    window.location.href = '/';
 };
 
 // CSV export helper
