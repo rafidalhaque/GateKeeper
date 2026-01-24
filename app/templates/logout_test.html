@@ -49,9 +49,69 @@
             document.getElementById('testConsole').innerHTML = '';
         }
 
+        // Enhanced debugging function
+        function debugEnvironment() {
+            console.log('=== ENVIRONMENT DEBUG ===');
+            console.log('Current URL:', window.location.href);
+            console.log('User agent:', navigator.userAgent);
+            console.log('Document ready state:', document.readyState);
+
+            // Check for global functions
+            console.log('=== GLOBAL FUNCTIONS ===');
+            const logoutFunctions = Object.keys(window).filter(key =>
+                key.toLowerCase().includes('logout') ||
+                key.toLowerCase().includes('handle')
+            );
+            console.log('Found functions:', logoutFunctions);
+
+            // Check for logout buttons in current page
+            console.log('=== LOGOUT BUTTONS ON PAGE ===');
+            const allElements = document.querySelectorAll('*');
+            const logoutElements = [];
+
+            allElements.forEach(el => {
+                if (el.id && (el.id.includes('logout') || el.id.includes('Logout'))) {
+                    logoutElements.push({type: 'ID', value: el.id, element: el.tagName});
+                }
+                if (el.textContent && el.textContent.toLowerCase().includes('logout')) {
+                    logoutElements.push({type: 'Text', value: el.textContent.trim(), element: el.tagName});
+                }
+            });
+
+            console.log('Found logout-related elements:', logoutElements);
+
+            // Check if we're in an iframe or parent window
+            console.log('=== WINDOW CONTEXT ===');
+            console.log('Is top window:', window === window.top);
+            console.log('Parent window:', window.parent !== window);
+
+            // Check for any error in global scope
+            console.log('=== ERROR CHECKING ===');
+            if (typeof window.handleLogout !== 'function') {
+                console.error('handleLogout function is NOT available globally');
+                console.log('Attempting to find it in parent windows...');
+
+                let currentWindow = window;
+                let level = 0;
+                while (currentWindow.parent && currentWindow.parent !== currentWindow && level < 5) {
+                    level++;
+                    currentWindow = currentWindow.parent;
+                    console.log(`Checking parent window level ${level}:`, typeof currentWindow.handleLogout);
+                    if (typeof currentWindow.handleLogout === 'function') {
+                        console.log(`Found handleLogout in parent window level ${level}`);
+                        break;
+                    }
+                }
+            } else {
+                console.log('✅ handleLogout function IS available globally');
+            }
+        }
+
         // Test logout function 1 - Direct API call
         document.getElementById('testLogout1').addEventListener('click', async function() {
             console.log('=== Test Logout Method 1: Direct API ===');
+            debugEnvironment();
+
             try {
                 console.log('Calling /auth/logout directly...');
                 const response = await fetch('/auth/logout', {
@@ -59,22 +119,29 @@
                     headers: { 'Content-Type': 'application/json' }
                 });
                 console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
                 const data = await response.json();
                 console.log('Response data:', JSON.stringify(data));
 
                 if (response.ok) {
                     console.log('✅ Logout API successful');
+                    console.log('Testing redirect...');
+                    // Don't actually redirect, just test
+                    console.log('Would redirect to: /login');
                 } else {
                     console.error('❌ Logout API failed');
                 }
             } catch (error) {
                 console.error('❌ Logout error:', error.message);
+                console.error('Error stack:', error.stack);
             }
         });
 
         // Test logout function 2 - Simulate button click
         document.getElementById('testLogout2').addEventListener('click', function() {
             console.log('=== Test Logout Method 2: Simulate Button Click ===');
+            debugEnvironment();
 
             // Look for logout buttons
             const logoutButtons = [
@@ -86,6 +153,11 @@
             logoutButtons.forEach((btn, index) => {
                 if (btn) {
                     console.log(`Found logout button ${index + 1}: ${btn.id}`);
+                    console.log(`  - Tag: ${btn.tagName}`);
+                    console.log(`  - Classes: ${btn.className}`);
+                    console.log(`  - Text: ${btn.textContent.trim()}`);
+                    console.log(`  - onclick: ${btn.onclick}`);
+                    console.log(`  - Event listeners: ${btn._listeners ? 'Yes' : 'Unknown'}`);
                 } else {
                     console.log(`Logout button ${index + 1} not found`);
                 }
@@ -94,13 +166,64 @@
             // Try to call handleLogout if available
             if (typeof window.handleLogout === 'function') {
                 console.log('Found handleLogout function, calling it...');
-                window.handleLogout();
+                try {
+                    window.handleLogout();
+                    console.log('handleLogout call completed');
+                } catch (error) {
+                    console.error('Error calling handleLogout:', error);
+                }
             } else {
                 console.error('handleLogout function not found');
+                console.log('Available window properties:', Object.keys(window).filter(k => !k.startsWith('webkit')).slice(0, 20));
             }
         });
 
-        console.log('🔧 Logout test page loaded');
+        // Test logout function 3 - Real button simulation
+        function addTestMethod3() {
+            const container = document.querySelector('.btn').parentElement;
+            const testBtn3 = document.createElement('button');
+            testBtn3.className = 'btn';
+            testBtn3.textContent = 'Test Real Button Click';
+            testBtn3.style.background = '#059669';
+
+            testBtn3.addEventListener('click', function() {
+                console.log('=== Test Method 3: Real Button Click Simulation ===');
+
+                // Try to find and click actual logout buttons
+                const realLogoutButtons = document.querySelectorAll('[id*="logout"], [id*="Logout"]');
+                console.log(`Found ${realLogoutButtons.length} logout buttons by ID`);
+
+                realLogoutButtons.forEach((btn, index) => {
+                    console.log(`Button ${index + 1}:`, {
+                        id: btn.id,
+                        text: btn.textContent.trim(),
+                        tag: btn.tagName,
+                        visible: btn.offsetParent !== null
+                    });
+
+                    if (btn.id && btn.offsetParent !== null) {
+                        console.log(`Attempting to click button: ${btn.id}`);
+                        try {
+                            btn.click();
+                            console.log(`✅ Successfully clicked ${btn.id}`);
+                        } catch (error) {
+                            console.error(`❌ Error clicking ${btn.id}:`, error);
+                        }
+                    }
+                });
+            });
+
+            container.appendChild(testBtn3);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Enhanced logout test page loaded');
+            debugEnvironment();
+            addTestMethod3();
+        });
+
+        // Run initial debug
         console.log('Available functions:', Object.keys(window).filter(key => key.includes('logout') || key.includes('Logout')));
     </script>
 </body>
