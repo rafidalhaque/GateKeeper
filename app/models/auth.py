@@ -57,7 +57,7 @@ class AdminUser(db.Model):
     __tablename__ = 'admin_users'
     
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    supabase_user_id = db.Column(String(255), unique=True, nullable=False)
+    supabase_user_id = db.Column(String(255), unique=True, nullable=True)
     role_id = db.Column(Integer, ForeignKey('roles.id', ondelete='SET NULL'))
     email = db.Column(String(255), unique=True, nullable=False)
     name = db.Column(String(255))

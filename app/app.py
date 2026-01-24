@@ -40,7 +40,8 @@ def create_app(config_name='default'):
     from app.routes import reports as reports_bp
     from app.routes import csv_import as csv_bp
     from app.routes import frontend as frontend_bp
-    
+    from app.routes import auth as auth_bp
+
     app.register_blueprint(events_bp.bp)
     app.register_blueprint(participants_bp.bp)
     app.register_blueprint(teams_bp.bp)
@@ -51,7 +52,8 @@ def create_app(config_name='default'):
     app.register_blueprint(reports_bp.bp)
     app.register_blueprint(csv_bp.bp)
     app.register_blueprint(frontend_bp.bp)
-    
+    app.register_blueprint(auth_bp.bp)
+
     # Register CLI commands
     from app.cli import register_commands
     register_commands(app)

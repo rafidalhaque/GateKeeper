@@ -150,6 +150,49 @@ def register_commands(app):
         db.session.commit()
         click.echo('Roles seeded successfully!')
     
+    @app.cli.command('create-admin')
+    @click.option('--email', prompt='Email', help='Admin email address')
+    @click.option('--name', prompt='Name', help='Admin name')
+    @click.option('--role', default='Event Admin', help='Role name (default: Event Admin)')
+    def create_admin(email, name, role):
+        """Create an admin user that will be linked to a Supabase account"""
+        click.echo(f'Creating admin user: {email}')
+
+        # Check if user already exists
+        existing_user = AdminUser.query.filter_by(email=email).first()
+        if existing_user:
+            click.echo('Error: User with this email already exists!')
+            return
+
+        # Find the role
+        user_role = Role.query.filter_by(name=role).first()
+        if not user_role:
+            click.echo(f'Error: Role "{role}" not found!')
+            click.echo('Available roles:')
+            for r in Role.query.all():
+                click.echo(f'  - {r.name}')
+            return
+
+        # Create admin user (without Supabase ID - will be linked on first login)
+        admin_user = AdminUser(
+            supabase_user_id=None,  # Will be set when user first logs in
+            email=email,
+            name=name,
+            role_id=user_role.id,
+            is_super_admin=False
+        )
+
+        db.session.add(admin_user)
+        db.session.commit()
+
+        click.echo(f'Admin user created successfully!')
+        click.echo(f'  Email: {email}')
+        click.echo(f'  Name: {name}')
+        click.echo(f'  Role: {role}')
+        click.echo('\nThe user can now sign in with their Supabase account using this email.')
+        click.echo('On first login, their Supabase ID will be automatically linked.')
+
+
     @app.cli.command('create-super-admin')
     @click.option('--email', prompt='Email', help='Admin email address')
     @click.option('--name', prompt='Name', help='Admin name')
@@ -163,13 +206,9 @@ def register_commands(app):
             click.echo('Error: User with this email already exists!')
             return
         
-        # Generate a unique Supabase user ID (in production, this would come from Supabase)
-        # For now, we'll use a UUID with a prefix
-        supabase_user_id = f'super-admin-{uuid.uuid4()}'
-        
-        # Create admin user
+        # Create admin user (without Supabase ID - will be linked on first login)
         admin_user = AdminUser(
-            supabase_user_id=supabase_user_id,
+            supabase_user_id=None,  # Will be set when user first logs in
             email=email,
             name=name,
             is_super_admin=True
@@ -181,6 +220,5 @@ def register_commands(app):
         click.echo(f'Super admin created successfully!')
         click.echo(f'  Email: {email}')
         click.echo(f'  Name: {name}')
-        click.echo(f'  Supabase User ID: {supabase_user_id}')
-        click.echo('\nNote: This user needs to be created in Supabase Auth separately.')
-        click.echo('In production, integrate with Supabase API to create the auth user.')
+        click.echo('\nThe user can now sign in with their Supabase account using this email.')
+        click.echo('On first login, their Supabase ID will be automatically linked.')

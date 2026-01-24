@@ -17,6 +17,12 @@ class Config:
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     
+    # Sessions
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    SESSION_COOKIE_SECURE = os.getenv('FLASK_ENV', 'development') == 'production'
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
     # Database
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/gatekeeper')
     SQLALCHEMY_TRACK_MODIFICATIONS = False

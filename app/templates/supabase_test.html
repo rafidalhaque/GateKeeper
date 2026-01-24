@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Auth Test - GateKeeper</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-base-200">
+    <div class="card w-full max-w-lg shadow-md bg-base-100">
+        <div class="card-body">
+            <h2 class="card-title">🔧 Supabase Connection Test</h2>
+
+            <div id="status" class="space-y-2">
+                <p>Testing Supabase connection...</p>
+            </div>
+
+            <div class="divider"></div>
+
+            <h3 class="font-bold">Manual Test</h3>
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Test Email</span>
+                </label>
+                <input type="email" id="testEmail" class="input input-bordered" placeholder="ahmadmusa@tuta.io">
+            </div>
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Test Password</span>
+                </label>
+                <input type="password" id="testPassword" class="input input-bordered" placeholder="password">
+            </div>
+
+            <button id="testBtn" class="btn btn-primary">Test Login</button>
+
+            <div id="result" class="mt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = "{{ config.SUPABASE_URL }}";
+        const supabaseKey = "{{ config.SUPABASE_KEY }}";
+
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+
+        // Initialize Supabase
+        try {
+            const { createClient } = supabase;
+            const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+            statusDiv.innerHTML = `
+                <p>✅ Supabase client initialized</p>
+                <p><strong>URL:</strong> ${supabaseUrl}</p>
+                <p><strong>Key:</strong> ${supabaseKey.substring(0, 20)}...</p>
+            `;
+
+            // Test connection
+            supabaseClient.auth.getSession().then(({ data, error }) => {
+                if (error) {
+                    statusDiv.innerHTML += `<p>❌ Session error: ${error.message}</p>`;
+                } else {
+                    statusDiv.innerHTML += `<p>✅ Supabase connection OK</p>`;
+                    if (data.session) {
+                        statusDiv.innerHTML += `<p>🔐 Already logged in as: ${data.session.user.email}</p>`;
+                    }
+                }
+            });
+
+            // Test login button
+            document.getElementById('testBtn').addEventListener('click', async () => {
+                const email = document.getElementById('testEmail').value;
+                const password = document.getElementById('testPassword').value;
+
+                resultDiv.innerHTML = '<p>Testing login...</p>';
+
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+
+                    if (error) {
+                        resultDiv.innerHTML = `<div class="alert alert-error"><span>❌ Login failed: ${error.message}</span></div>`;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <span>✅ Login successful!</span>
+                            </div>
+                            <div class="mt-2 text-sm">
+                                <p><strong>User ID:</strong> ${data.user.id}</p>
+                                <p><strong>Email:</strong> ${data.user.email}</p>
+                                <p><strong>Token:</strong> ${data.session.access_token.substring(0, 50)}...</p>
+                            </div>
+                        `;
+
+                        // Test admin verification
+                        const verifyResponse = await fetch('/auth/verify-admin', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${data.session.access_token}`
+                            },
+                            body: JSON.stringify({
+                                supabase_user_id: data.user.id,
+                                email: data.user.email,
+                                name: data.user.user_metadata?.name || data.user.email
+                            })
+                        });
+
+                        if (verifyResponse.ok) {
+                            const adminData = await verifyResponse.json();
+                            resultDiv.innerHTML += `
+                                <div class="alert alert-success mt-2">
+                                    <span>✅ Admin verification successful!</span>
+                                </div>
+                                <div class="mt-2 text-sm">
+                                    <p><strong>Admin Name:</strong> ${adminData.user.name}</p>
+                                    <p><strong>Super Admin:</strong> ${adminData.user.is_super_admin}</p>
+                                </div>
+                            `;
+                        } else {
+                            const errorData = await verifyResponse.json();
+                            resultDiv.innerHTML += `
+                                <div class="alert alert-error mt-2">
+                                    <span>❌ Admin verification failed: ${errorData.error}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                } catch (err) {
+                    resultDiv.innerHTML = `<div class="alert alert-error"><span>❌ Error: ${err.message}</span></div>`;
+                }
+            });
+
+        } catch (error) {
+            statusDiv.innerHTML = `<p>❌ Failed to initialize Supabase: ${error.message}</p>`;
+        }
+    </script>
+</body>
+</html>

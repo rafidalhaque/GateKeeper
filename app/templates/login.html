@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - GateKeeper</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-base-200">
+    <div class="card w-full max-w-md shadow-md bg-base-100">
+        <div class="card-body">
+            <h2 class="card-title">Admin Login</h2>
+            <p class="text-sm mb-4">Sign in with your admin credentials to access the GateKeeper admin panel.</p>
+
+            <form id="loginForm" class="space-y-4">
+                <div class="form-control">
+                    <label class="label" for="email">
+                        <span class="label-text">Email</span>
+                    </label>
+                    <input type="email" id="email" class="input input-bordered" placeholder="admin@example.com" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label" for="password">
+                        <span class="label-text">Password</span>
+                    </label>
+                    <input type="password" id="password" class="input input-bordered" placeholder="Password" required>
+                </div>
+
+                <div class="form-control mt-6">
+                    <button type="submit" id="loginBtn" class="btn btn-primary">
+                        <span class="loading loading-spinner loading-sm hidden" id="loadingSpinner"></span>
+                        Sign In
+                    </button>
+                </div>
+            </form>
+
+            <div id="errorMessage" class="alert alert-error mt-4 hidden">
+                <span id="errorText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nextPath = "{{ next|e }}" || '/admin';
+        const supabaseUrl = "{{ config.SUPABASE_URL }}";
+        const supabaseKey = "{{ config.SUPABASE_KEY }}";
+
+        // Initialize Supabase
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+        // DOM elements
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        // Enable form validation
+        function checkFormValidity() {
+            const isValid = emailInput.value.trim() && passwordInput.value.trim();
+            loginBtn.disabled = !isValid;
+        }
+
+        emailInput.addEventListener('input', checkFormValidity);
+        passwordInput.addEventListener('input', checkFormValidity);
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        function setLoading(loading) {
+            loginBtn.disabled = loading;
+            if (loading) {
+                loadingSpinner.classList.remove('hidden');
+                loginBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Signing In...';
+            } else {
+                loadingSpinner.classList.add('hidden');
+                loginBtn.innerHTML = 'Sign In';
+                checkFormValidity();
+            }
+        }
+
+        // Handle login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+            setLoading(true);
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            try {
+                // Sign in with Supabase
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    showError(error.message);
+                    setLoading(false);
+                    return;
+                }
+
+                // Get session
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    showError('Authentication failed. Please try again.');
+                    setLoading(false);
+                    return;
+                }
+
+                // Authenticate with backend
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        access_token: session.access_token
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    showError(errorData.message || errorData.error || 'Login failed');
+                    setLoading(false);
+                    return;
+                }
+
+                // Success - redirect
+                window.location.href = nextPath;
+
+            } catch (err) {
+                console.error('Login error:', err);
+                showError('An unexpected error occurred. Please try again.');
+                setLoading(false);
+            }
+        });
+
+        // Check if already logged in
+        fetch('/auth/me')
+            .then(response => response.json())
+            .then(data => {
+                if (data.authenticated) {
+                    window.location.href = nextPath;
+                }
+            })
+            .catch(() => {
+                // Ignore errors, just stay on login page
+            });
+
+        // Initial form validation
+        checkFormValidity();
+    </script>
+</body>
+</html>

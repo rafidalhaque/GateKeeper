@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout Test - GateKeeper</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .btn { padding: 10px 20px; margin: 10px; background: #dc2626; color: white; border: none; cursor: pointer; }
+        .console { background: #000; color: #0f0; padding: 20px; height: 300px; overflow-y: auto; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Logout Function Test</h1>
+
+    <p>Click the buttons below to test different logout scenarios:</p>
+
+    <button id="testLogout1" class="btn">Test Logout (Method 1)</button>
+    <button id="testLogout2" class="btn">Test Logout (Method 2)</button>
+    <button id="clearConsole" onclick="clearTestConsole()" style="background: #666;">Clear Console</button>
+
+    <h3>Debug Console:</h3>
+    <div id="testConsole" class="console"></div>
+
+    <script>
+        // Capture all console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        function addToTestConsole(message, type = 'log') {
+            const testConsole = document.getElementById('testConsole');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#f00' : '#0f0';
+            testConsole.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+            testConsole.scrollTop = testConsole.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToTestConsole(args.join(' '), 'log');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToTestConsole('ERROR: ' + args.join(' '), 'error');
+        };
+
+        function clearTestConsole() {
+            document.getElementById('testConsole').innerHTML = '';
+        }
+
+        // Test logout function 1 - Direct API call
+        document.getElementById('testLogout1').addEventListener('click', async function() {
+            console.log('=== Test Logout Method 1: Direct API ===');
+            try {
+                console.log('Calling /auth/logout directly...');
+                const response = await fetch('/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', JSON.stringify(data));
+
+                if (response.ok) {
+                    console.log('✅ Logout API successful');
+                } else {
+                    console.error('❌ Logout API failed');
+                }
+            } catch (error) {
+                console.error('❌ Logout error:', error.message);
+            }
+        });
+
+        // Test logout function 2 - Simulate button click
+        document.getElementById('testLogout2').addEventListener('click', function() {
+            console.log('=== Test Logout Method 2: Simulate Button Click ===');
+
+            // Look for logout buttons
+            const logoutButtons = [
+                document.getElementById('navLogoutBtn'),
+                document.getElementById('logoutBtn')
+            ];
+
+            console.log('Looking for logout buttons...');
+            logoutButtons.forEach((btn, index) => {
+                if (btn) {
+                    console.log(`Found logout button ${index + 1}: ${btn.id}`);
+                } else {
+                    console.log(`Logout button ${index + 1} not found`);
+                }
+            });
+
+            // Try to call handleLogout if available
+            if (typeof window.handleLogout === 'function') {
+                console.log('Found handleLogout function, calling it...');
+                window.handleLogout();
+            } else {
+                console.error('handleLogout function not found');
+            }
+        });
+
+        console.log('🔧 Logout test page loaded');
+        console.log('Available functions:', Object.keys(window).filter(key => key.includes('logout') || key.includes('Logout')));
+    </script>
+</body>
+</html>
