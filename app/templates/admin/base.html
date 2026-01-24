@@ -92,6 +92,16 @@
     
     <!-- Custom JS -->
     <script>
+        // Check authentication on page load for all admin pages
+        (function() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                // No token found - redirect to home/login
+                alert('Authentication required. Please log in to access the admin panel.');
+                window.location.href = '/';
+            }
+        })();
+        
         // Global utility functions
         function showAlert(message, type = 'success') {
             window.dispatchEvent(new CustomEvent('show-alert', {
@@ -117,8 +127,10 @@
                 // Handle authentication failures
                 if (response.status === 401) {
                     showAlert('Session expired. Please login again.', 'error');
-                    // Optionally redirect to login
-                    // setTimeout(() => window.location.href = '/login', 2000);
+                    setTimeout(() => {
+                        localStorage.removeItem('access_token');
+                        window.location.href = '/';
+                    }, 2000);
                 }
                 return response;
             });
