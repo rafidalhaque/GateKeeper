@@ -1,0 +1,47 @@
+<!-- Team Form Modal -->
+<div x-data="{ show: false }" 
+     @open-team-modal.window="show = true"
+     @close-team-modal.window="show = false"
+     x-show="show"
+     class="modal" 
+     :class="{ 'modal-open': show }">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4" x-text="editingTeam ? 'Edit Team' : 'Create New Team'"></h3>
+        
+        <form @submit.prevent="saveTeam()">
+            <!-- Team Name -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Team Name *</span>
+                </label>
+                <input type="text" 
+                       x-model="formData.team_name" 
+                       placeholder="Enter team name" 
+                       class="input input-bordered w-full" 
+                       required>
+            </div>
+            
+            <!-- Event -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Event *</span>
+                </label>
+                <select x-model="formData.event_id" class="select select-bordered w-full" required>
+                    <option value="">Select an event</option>
+                    <template x-for="event in events" :key="event.id">
+                        <option :value="event.id" x-text="event.name"></option>
+                    </template>
+                </select>
+            </div>
+            
+            <!-- Modal Actions -->
+            <div class="modal-action">
+                <button type="button" class="btn" @click="$dispatch('close-team-modal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <span x-text="editingTeam ? 'Update Team' : 'Create Team'"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+    <label class="modal-backdrop" @click="$dispatch('close-team-modal')"></label>
+</div>

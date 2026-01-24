@@ -1,0 +1,185 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Settings - GateKeeper Admin{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block breadcrumb %}
+{% set breadcrumb_items = [{'name': 'Settings'}] %}
+{% include 'admin/components/breadcrumb.html' %}
+{% endblock %}
+
+{% block content %}
+<div x-data="settingsManager()" x-init="loadSettings()">
+    <!-- System Configuration -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title mb-4">System Configuration</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Application Name</span>
+                    </label>
+                    <input type="text" class="input input-bordered" value="GateKeeper" readonly>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Version</span>
+                    </label>
+                    <input type="text" class="input input-bordered" value="1.0.0" readonly>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Environment</span>
+                    </label>
+                    <input type="text" class="input input-bordered" x-model="settings.environment" readonly>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Database Type</span>
+                    </label>
+                    <input type="text" class="input input-bordered" value="PostgreSQL" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Email Settings -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title mb-4">Email Settings</h2>
+            
+            <div class="alert alert-info mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Email settings are configured via environment variables</span>
+            </div>
+            
+            <div class="form-control mb-4">
+                <label class="label">
+                    <span class="label-text">SMTP Server</span>
+                </label>
+                <input type="text" class="input input-bordered" x-model="settings.smtp_host" readonly>
+            </div>
+            
+            <div class="form-control mb-4">
+                <label class="label">
+                    <span class="label-text">From Email</span>
+                </label>
+                <input type="email" class="input input-bordered" x-model="settings.from_email" readonly>
+            </div>
+            
+            <button class="btn btn-outline" @click="testEmail()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                Test Email Configuration
+            </button>
+        </div>
+    </div>
+    
+    <!-- Database Information -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title mb-4">Database Information</h2>
+            
+            <div class="stats shadow w-full">
+                <div class="stat">
+                    <div class="stat-title">Total Events</div>
+                    <div class="stat-value" x-text="dbStats.total_events || 0"></div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-title">Total Participants</div>
+                    <div class="stat-value" x-text="dbStats.total_participants || 0"></div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-title">Total Teams</div>
+                    <div class="stat-value" x-text="dbStats.total_teams || 0"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- API Documentation -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title mb-4">API Documentation</h2>
+            <p class="mb-4">Access the API documentation for integration and development.</p>
+            
+            <div class="flex gap-2">
+                <a href="/API.md" target="_blank" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    View API Documentation
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function settingsManager() {
+    return {
+        settings: {
+            environment: 'production',
+            smtp_host: 'smtp.example.com',
+            from_email: 'noreply@gatekeeper.com'
+        },
+        dbStats: {},
+        
+        async loadSettings() {
+            try {
+                // Load database stats
+                const eventsRes = await authFetch('/api/events');
+                const participantsRes = await authFetch('/api/participants');
+                const teamsRes = await authFetch('/api/teams');
+                
+                if (eventsRes.ok) {
+                    const events = await eventsRes.json();
+                    this.dbStats.total_events = events.length;
+                }
+                
+                if (participantsRes.ok) {
+                    const participants = await participantsRes.json();
+                    this.dbStats.total_participants = participants.length;
+                }
+                
+                if (teamsRes.ok) {
+                    const teams = await teamsRes.json();
+                    this.dbStats.total_teams = teams.length;
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        },
+        
+        async testEmail() {
+            try {
+                const response = await authFetch('/api/email/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    showAlert('Test email sent successfully', 'success');
+                } else {
+                    showAlert('Error sending test email', 'error');
+                }
+            } catch (error) {
+                console.error('Error testing email:', error);
+                showAlert('Error testing email', 'error');
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

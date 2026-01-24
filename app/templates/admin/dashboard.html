@@ -1,0 +1,226 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard - GateKeeper Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block breadcrumb %}
+{% include 'admin/components/breadcrumb.html' %}
+{% endblock %}
+
+{% block content %}
+<div x-data="dashboardData()" x-init="loadData()">
+    <!-- Loading State -->
+    <div x-show="loading" class="flex justify-center items-center py-12">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Total Events -->
+        <div class="stats shadow">
+            <div class="stat">
+                <div class="stat-figure text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                    </svg>
+                </div>
+                <div class="stat-title">Total Events</div>
+                <div class="stat-value text-primary" x-text="stats.totalEvents"></div>
+                <div class="stat-desc">All time</div>
+            </div>
+        </div>
+        
+        <!-- Total Participants -->
+        <div class="stats shadow">
+            <div class="stat">
+                <div class="stat-figure text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
+                </div>
+                <div class="stat-title">Total Participants</div>
+                <div class="stat-value text-secondary" x-text="stats.totalParticipants"></div>
+                <div class="stat-desc">Across all events</div>
+            </div>
+        </div>
+        
+        <!-- Check-ins Today -->
+        <div class="stats shadow">
+            <div class="stat">
+                <div class="stat-figure text-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="stat-title">Check-ins Today</div>
+                <div class="stat-value text-success" x-text="stats.checkinsToday"></div>
+                <div class="stat-desc">Last 24 hours</div>
+            </div>
+        </div>
+        
+        <!-- Active Events -->
+        <div class="stats shadow">
+            <div class="stat">
+                <div class="stat-figure text-accent">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                    </svg>
+                </div>
+                <div class="stat-title">Active Events</div>
+                <div class="stat-value text-accent" x-text="stats.activeEvents"></div>
+                <div class="stat-desc">Currently running</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title mb-4">Quick Actions</h2>
+            <div class="flex flex-wrap gap-2">
+                <a href="/admin/events" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Create Event
+                </a>
+                <a href="/admin/participants" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                    </svg>
+                    Add Participant
+                </a>
+                <a href="/scanner" class="btn btn-accent">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                    </svg>
+                    QR Scanner
+                </a>
+                <a href="/admin/reports" class="btn btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                    View Reports
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity & Upcoming Events -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Recent Activity -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Recent Activity</h2>
+                <div x-show="recentActivity.length === 0" class="text-center py-8 text-base-content/50">
+                    <p>No recent activity</p>
+                </div>
+                <ul class="space-y-2">
+                    <template x-for="activity in recentActivity" :key="activity.id">
+                        <li class="flex items-start gap-3 p-2 hover:bg-base-200 rounded">
+                            <div class="badge badge-primary badge-sm mt-1"></div>
+                            <div class="flex-1">
+                                <p class="text-sm" x-text="activity.description"></p>
+                                <p class="text-xs text-base-content/60" x-text="activity.time"></p>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Upcoming Events -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Upcoming Events</h2>
+                <div x-show="upcomingEvents.length === 0" class="text-center py-8 text-base-content/50">
+                    <p>No upcoming events</p>
+                </div>
+                <ul class="space-y-2">
+                    <template x-for="event in upcomingEvents" :key="event.id">
+                        <li class="p-3 bg-base-200 rounded-lg">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold" x-text="event.name"></h3>
+                                    <p class="text-sm text-base-content/60" x-text="event.date"></p>
+                                    <p class="text-xs" x-text="event.venue"></p>
+                                </div>
+                                <span class="badge" :class="event.mode === 'team' ? 'badge-secondary' : 'badge-primary'" x-text="event.mode"></span>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function dashboardData() {
+    return {
+        loading: true,
+        stats: {
+            totalEvents: 0,
+            totalParticipants: 0,
+            checkinsToday: 0,
+            activeEvents: 0
+        },
+        recentActivity: [],
+        upcomingEvents: [],
+        
+        async loadData() {
+            this.loading = true;
+            try {
+                // Load events
+                const eventsRes = await authFetch('/api/events');
+                if (eventsRes.ok) {
+                    const events = await eventsRes.json();
+                    this.stats.totalEvents = events.length;
+                    
+                    // Filter active events (today's date)
+                    const today = new Date();
+                    this.stats.activeEvents = events.filter(e => {
+                        const eventDate = new Date(e.date);
+                        return eventDate.toDateString() === today.toDateString();
+                    }).length;
+                    
+                    // Get upcoming events
+                    this.upcomingEvents = events
+                        .filter(e => new Date(e.date) >= today)
+                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .slice(0, 5)
+                        .map(e => ({
+                            ...e,
+                            date: new Date(e.date).toLocaleDateString()
+                        }));
+                }
+                
+                // Load participants count
+                const participantsRes = await authFetch('/api/participants');
+                if (participantsRes.ok) {
+                    const participants = await participantsRes.json();
+                    this.stats.totalParticipants = participants.length;
+                }
+                
+                // Load check-ins (would need an API endpoint for this)
+                // For now, using a placeholder
+                this.stats.checkinsToday = 0;
+                
+                // Mock recent activity
+                this.recentActivity = [
+                    { id: 1, description: 'System initialized', time: 'Just now' }
+                ];
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showAlert('Error loading dashboard data', 'error');
+            } finally {
+                this.loading = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

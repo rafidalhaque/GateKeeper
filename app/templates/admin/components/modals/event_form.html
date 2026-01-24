@@ -1,0 +1,84 @@
+<!-- Event Form Modal -->
+<div x-data="{ show: false }" 
+     @open-event-modal.window="show = true"
+     @close-event-modal.window="show = false"
+     x-show="show"
+     class="modal" 
+     :class="{ 'modal-open': show }">
+    <div class="modal-box w-11/12 max-w-2xl">
+        <h3 class="font-bold text-lg mb-4" x-text="editingEvent ? 'Edit Event' : 'Create New Event'"></h3>
+        
+        <form @submit.prevent="saveEvent()">
+            <!-- Event Name -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Event Name *</span>
+                </label>
+                <input type="text" 
+                       x-model="formData.name" 
+                       placeholder="Enter event name" 
+                       class="input input-bordered w-full" 
+                       required>
+            </div>
+            
+            <!-- Date -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Date *</span>
+                </label>
+                <input type="date" 
+                       x-model="formData.date" 
+                       class="input input-bordered w-full" 
+                       required>
+            </div>
+            
+            <!-- Venue -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Venue</span>
+                </label>
+                <input type="text" 
+                       x-model="formData.venue" 
+                       placeholder="Enter venue location" 
+                       class="input input-bordered w-full">
+            </div>
+            
+            <!-- Mode -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Mode *</span>
+                </label>
+                <select x-model="formData.mode" class="select select-bordered w-full">
+                    <option value="solo">Solo</option>
+                    <option value="team">Team</option>
+                </select>
+                <label class="label">
+                    <span class="label-text-alt">Solo mode for individual participants, Team mode for team events</span>
+                </label>
+            </div>
+            
+            <!-- Passcode -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Access Passcode</span>
+                </label>
+                <input type="text" 
+                       x-model="formData.passcode" 
+                       placeholder="Optional passcode for event access" 
+                       class="input input-bordered w-full">
+                <label class="label">
+                    <span class="label-text-alt">Leave empty if no passcode required</span>
+                </label>
+            </div>
+            
+            <!-- Modal Actions -->
+            <div class="modal-action">
+                <button type="button" class="btn" @click="$dispatch('close-event-modal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <span x-text="editingEvent ? 'Update Event' : 'Create Event'"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+    <label class="modal-backdrop" @click="$dispatch('close-event-modal')"></label>
+</div>

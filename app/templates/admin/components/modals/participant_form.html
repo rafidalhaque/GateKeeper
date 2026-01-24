@@ -1,0 +1,59 @@
+<!-- Participant Form Modal -->
+<div x-data="{ show: false }" 
+     @open-participant-modal.window="show = true"
+     @close-participant-modal.window="show = false"
+     x-show="show"
+     class="modal" 
+     :class="{ 'modal-open': show }">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4" x-text="editingParticipant ? 'Edit Participant' : 'Add New Participant'"></h3>
+        
+        <form @submit.prevent="saveParticipant()">
+            <!-- Name -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Name *</span>
+                </label>
+                <input type="text" 
+                       x-model="formData.name" 
+                       placeholder="Enter participant name" 
+                       class="input input-bordered w-full" 
+                       required>
+            </div>
+            
+            <!-- Email -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Email *</span>
+                </label>
+                <input type="email" 
+                       x-model="formData.email" 
+                       placeholder="Enter email address" 
+                       class="input input-bordered w-full" 
+                       required>
+            </div>
+            
+            <!-- Event -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Event *</span>
+                </label>
+                <select x-model="formData.event_id" class="select select-bordered w-full" required>
+                    <option value="">Select an event</option>
+                    <template x-for="event in events" :key="event.id">
+                        <option :value="event.id" x-text="event.name"></option>
+                    </template>
+                </select>
+            </div>
+            
+            <!-- Modal Actions -->
+            <div class="modal-action">
+                <button type="button" class="btn" @click="$dispatch('close-participant-modal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <span x-text="editingParticipant ? 'Update' : 'Add'"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+    <label class="modal-backdrop" @click="$dispatch('close-participant-modal')"></label>
+</div>
