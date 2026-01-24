@@ -1,0 +1,57 @@
+# Flask and extensions
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+Flask-CORS==4.0.0
+Werkzeug==3.0.1
+
+# Database
+psycopg2-binary==2.9.9
+PyMySQL==1.1.0
+
+# Authentication
+PyJWT==2.8.0
+python-dotenv==1.0.0
+
+# Celery and Redis
+celery==5.3.4
+redis==5.0.1
+
+# Email
+Flask-Mail==0.9.1
+
+# PDF Generation
+WeasyPrint==60.1
+
+# QR Code
+qrcode[pil]==7.4.2
+segno==1.6.1
+
+# Templates
+Jinja2==3.1.2
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+bcrypt==4.1.1
+
+# CSV Processing
+pandas==2.1.4
+
+# Image processing (for QR codes)
+Pillow==10.1.0
+
+# Validation
+email-validator==2.1.0
+
+# HTTP requests (for Supabase)
+requests==2.31.0
+
+# CLI
+click==8.1.7
+
+# Production server
+gunicorn==21.2.0
+
+# Development tools
+flask-shell-ipython==0.4.1
