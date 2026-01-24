@@ -6,7 +6,7 @@ Flask-CORS==4.0.0
 Werkzeug==3.0.1
 
 # Database
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.11
 PyMySQL==1.1.0
 
 # Authentication
@@ -36,10 +36,10 @@ pytz==2023.3
 bcrypt==4.1.1
 
 # CSV Processing
-pandas==2.1.4
+pandas>=2.3.0
 
 # Image processing (for QR codes)
-Pillow==10.1.0
+Pillow>=10.4.0
 
 # Validation
 email-validator==2.1.0
