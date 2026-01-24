@@ -1,3 +1,146 @@
+# Onsite Event Dashboard – System Plan
+
+## 1. Goal
+Build a **self-hosted onsite event management system** that supports:
+- Solo and team-based events
+- Secure QR-based attendance check-in
+- Ticketing with PDF + email delivery
+- Admin-controlled attendee management
+- Privacy-safe attendee views
+- Onsite booth-friendly QR scanning
+
+Designed for **real-world events**, unstable internet, and fast check-in.
+
+---
+
+## 2. Tech Stack
+
+### Backend
+- Python
+- Flask
+- SQLAlchemy (ORM)
+- Jinja2 (templates for email + tickets)
+
+### Frontend
+- TailwindCSS
+- DaisyUI
+- Vanilla JS / Alpine.js (lightweight interactivity)
+- Browser Camera API (QR scanning)
+
+### Database
+- PostgreSQL **or** MySQL (configurable)
+- UUID + integer hybrid model
+
+### Authentication
+- Supabase Auth
+- JWT-based auth validation in Flask
+
+### Other
+- SMTP (custom, admin-configurable)
+- QR generation: `qrcode` / `pyqrcode`
+- PDF generation: `WeasyPrint` or `wkhtmltopdf`
+
+---
+
+## 3. Roles & Access Model
+
+### Admin
+- Full control over events
+- CSV import
+- Ticket template design
+- Email sending
+- Attendance reporting
+- Manual add/edit/delete participants & teams
+
+### Booth Manager
+- Access QR scanner page
+- Can mark attendance using passcode
+- Limited to check-in related features
+
+### Attendee (Public)
+- Access only their **own ticket page**
+- Can see only self data (and team name/id if applicable)
+
+---
+
+## 4. Event Configuration
+
+Each event has:
+- `mode`: `solo` | `team`
+- Attendance `passcode`
+- Ticket HTML + CSS template
+- SMTP configuration reference
+
+Event mode determines:
+- CSV format
+- UI behavior
+- Attendance logic
+
+---
+
+## 5. Database Schema (Core)
+
+### events
+- id (uuid, pk)
+- name
+- date
+- venue
+- mode (`solo` | `team`)
+- passcode
+- ticket_template_html
+- ticket_template_css
+- created_at
+- updated_at
+
+### teams
+- id (integer, pk, auto-increment)
+- uuid (uuid, unique)
+- event_id (fk → events.id)
+- team_name
+- created_at
+- updated_at
+
+### participants
+- id (uuid, pk)
+- event_id (fk → events.id)
+- team_id (fk → teams.id, nullable)
+- name
+- email
+- t_shirt_size
+- unique_url_uuid
+- attendance_status (boolean)
+- attended_at (timestamp, nullable)
+- created_at
+- updated_at
+
+### email_logs
+- id (integer, pk)
+- event_id
+- recipient_email
+- subject
+- template_name
+- status (`sent` | `failed`)
+- error_message (nullable)
+- created_at
+
+---
+
+## 6. CSV Import Logic
+
+### Team Mode CSV
+
+team_id, team_name, member_name, member_email, t-shirt_size
+
+
+Behavior:
+- Group rows by `team_id`
+- Create one `teams` row per team_id
+- Create multiple `participants` linked to `teams.id`
+- Generate UUID for each participant
+
+### Solo Mode CSV
+
+participant_name, participant_email, t-shirt_size
 
 Behavior:
 - One participant per row
