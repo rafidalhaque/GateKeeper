@@ -1161,4 +1161,142 @@ JazakAllahu Khairan for registering!
 
 ---
 
+```mermaid
+graph TB
+    subgraph "External Services"
+        SUPABASE[Supabase Auth<br/>JWT Validation]
+        SMTP[SMTP Server<br/>Email Delivery]
+    end
+
+    subgraph "Frontend Layer"
+        ADMIN_UI[Admin Panel<br/>TailwindCSS + DaisyUI]
+        SCANNER[QR Scanner Page<br/>Alpine.js + Camera API]
+        TICKET_VIEW[Ticket View Page<br/>Public Access]
+    end
+
+    subgraph "Flask Backend"
+        API[Flask API<br/>REST Endpoints]
+        AUTH_MW[Auth Middleware<br/>JWT + RBAC]
+        
+        subgraph "Core Services"
+            EVENT_SVC[Event Service]
+            PARTICIPANT_SVC[Participant Service]
+            TEAM_SVC[Team Service]
+            CHECKIN_SVC[Check-in Service]
+            EMAIL_SVC[Email Service]
+            TICKET_SVC[Ticket Service]
+            ROLE_SVC[Role & Permission Service]
+        end
+    end
+
+    subgraph "Background Jobs - Celery"
+        CELERY_WORKER[Celery Workers]
+        CSV_JOB[CSV Import Job]
+        EMAIL_JOB[Bulk Email Job]
+        PDF_JOB[PDF Generation Job]
+    end
+
+    subgraph "Data Layer"
+        POSTGRES[(PostgreSQL<br/>Main Database)]
+        REDIS[(Redis<br/>Celery Broker)]
+        
+        subgraph "Database Tables"
+            EVENTS[events]
+            TEAMS[teams<br/>is_empty flag]
+            PARTICIPANTS[participants<br/>custom_data JSONB]
+            EMAIL_LOGS[email_logs<br/>retry logic]
+            CHECKIN_LOGS[checkin_logs<br/>audit trail]
+            ROLES[roles]
+            PERMISSIONS[permissions]
+            ROLE_PERMS[role_permissions]
+            ADMIN_USERS[admin_users]
+            CELERY_JOBS[celery_jobs<br/>progress tracking]
+        end
+    end
+
+    subgraph "File Generation"
+        WEASYPRINT[WeasyPrint<br/>PDF Engine]
+        QR_GEN[QR Code Generator<br/>segno/qrcode]
+    end
+
+    %% Frontend to Backend
+    ADMIN_UI -->|HTTP/HTTPS| API
+    SCANNER -->|HTTP/HTTPS| API
+    TICKET_VIEW -->|HTTP/HTTPS| API
+
+    %% Backend to External
+    API -->|Validate JWT| SUPABASE
+    EMAIL_SVC -->|Send Emails| SMTP
+
+    %% API to Middleware
+    API --> AUTH_MW
+
+    %% Middleware to Services
+    AUTH_MW --> EVENT_SVC
+    AUTH_MW --> PARTICIPANT_SVC
+    AUTH_MW --> TEAM_SVC
+    AUTH_MW --> CHECKIN_SVC
+    AUTH_MW --> EMAIL_SVC
+    AUTH_MW --> TICKET_SVC
+    AUTH_MW --> ROLE_SVC
+
+    %% Services to Database
+    EVENT_SVC --> EVENTS
+    PARTICIPANT_SVC --> PARTICIPANTS
+    TEAM_SVC --> TEAMS
+    CHECKIN_SVC --> CHECKIN_LOGS
+    EMAIL_SVC --> EMAIL_LOGS
+    ROLE_SVC --> ROLES
+    ROLE_SVC --> PERMISSIONS
+    ROLE_SVC --> ROLE_PERMS
+    ROLE_SVC --> ADMIN_USERS
+
+    %% Services to Celery
+    PARTICIPANT_SVC -.Queue Job.-> REDIS
+    EMAIL_SVC -.Queue Job.-> REDIS
+    TICKET_SVC -.Queue Job.-> REDIS
+
+    %% Celery Workers
+    REDIS --> CELERY_WORKER
+    CELERY_WORKER --> CSV_JOB
+    CELERY_WORKER --> EMAIL_JOB
+    CELERY_WORKER --> PDF_JOB
+
+    %% Jobs to Database
+    CSV_JOB --> PARTICIPANTS
+    CSV_JOB --> TEAMS
+    EMAIL_JOB --> EMAIL_LOGS
+    PDF_JOB --> CELERY_JOBS
+
+    %% Jobs to File Generation
+    EMAIL_JOB --> SMTP
+    PDF_JOB --> WEASYPRINT
+    PDF_JOB --> QR_GEN
+
+    %% File Generation to Services
+    WEASYPRINT --> TICKET_SVC
+    QR_GEN --> TICKET_SVC
+
+    %% All Services to Postgres
+    EVENT_SVC --> POSTGRES
+    PARTICIPANT_SVC --> POSTGRES
+    TEAM_SVC --> POSTGRES
+    CHECKIN_SVC --> POSTGRES
+    EMAIL_SVC --> POSTGRES
+    TICKET_SVC --> POSTGRES
+    ROLE_SVC --> POSTGRES
+
+    %% Jobs to Postgres
+    CSV_JOB --> POSTGRES
+    EMAIL_JOB --> POSTGRES
+    PDF_JOB --> POSTGRES
+
+    style SUPABASE fill:#10b981
+    style SMTP fill:#10b981
+    style POSTGRES fill:#3b82f6
+    style REDIS fill:#ef4444
+    style CELERY_WORKER fill:#f59e0b
+    style API fill:#8b5cf6
+    style AUTH_MW fill:#ec4899
+```
 Built for chaos. Designed for real events.
