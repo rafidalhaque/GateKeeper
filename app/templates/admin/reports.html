@@ -1,0 +1,226 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Reports & Analytics - GateKeeper Admin{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block breadcrumb %}
+{% set breadcrumb_items = [{'name': 'Reports'}] %}
+{% include 'admin/components/breadcrumb.html' %}
+{% endblock %}
+
+{% block content %}
+<div x-data="reportsManager()" x-init="loadEvents()">
+    <!-- Event Selector -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title mb-4">Select Event</h2>
+            <div class="flex gap-4">
+                <select class="select select-bordered flex-1" x-model="selectedEventId" @change="loadReport()">
+                    <option value="">Select an event...</option>
+                    <template x-for="event in events" :key="event.id">
+                        <option :value="event.id" x-text="event.name"></option>
+                    </template>
+                </select>
+                <button class="btn btn-outline" @click="exportReport()" x-show="selectedEventId" :disabled="loading">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading State -->
+    <div x-show="loading" class="flex justify-center items-center py-12">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+    
+    <!-- Report Content -->
+    <div x-show="!loading && selectedEventId && report">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="stats shadow">
+                <div class="stat">
+                    <div class="stat-title">Total Participants</div>
+                    <div class="stat-value text-primary" x-text="report.total_participants"></div>
+                </div>
+            </div>
+            
+            <div class="stats shadow">
+                <div class="stat">
+                    <div class="stat-title">Checked In</div>
+                    <div class="stat-value text-success" x-text="report.checked_in"></div>
+                </div>
+            </div>
+            
+            <div class="stats shadow">
+                <div class="stat">
+                    <div class="stat-title">Attendance Rate</div>
+                    <div class="stat-value" x-text="report.attendance_rate + '%'"></div>
+                </div>
+            </div>
+            
+            <div class="stats shadow">
+                <div class="stat">
+                    <div class="stat-title">Teams</div>
+                    <div class="stat-value text-secondary" x-text="report.total_teams || 0"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Team Statistics (if team mode) -->
+        <div x-show="report.team_stats && report.team_stats.length > 0" class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Team Statistics</h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                            <tr>
+                                <th>Team Name</th>
+                                <th>Members</th>
+                                <th>Checked In</th>
+                                <th>Attendance Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="team in report.team_stats" :key="team.id">
+                                <tr>
+                                    <td x-text="team.team_name"></td>
+                                    <td x-text="team.member_count"></td>
+                                    <td x-text="team.checked_in"></td>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            <progress class="progress progress-primary w-20" :value="team.attendance_rate" max="100"></progress>
+                                            <span x-text="team.attendance_rate + '%'"></span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Check-in Timeline -->
+        <div class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Check-in Timeline</h2>
+                <div class="text-center py-8 text-base-content/50">
+                    <p>Check-in timeline visualization would be displayed here</p>
+                    <p class="text-sm">(Chart visualization can be added with Chart.js or similar library)</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Check-ins -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Recent Check-ins</h2>
+                <div x-show="report.recent_checkins && report.recent_checkins.length > 0">
+                    <div class="overflow-x-auto">
+                        <table class="table table-zebra">
+                            <thead>
+                                <tr>
+                                    <th>Participant</th>
+                                    <th>Team</th>
+                                    <th>Check-in Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="checkin in report.recent_checkins" :key="checkin.id">
+                                    <tr>
+                                        <td x-text="checkin.participant_name"></td>
+                                        <td x-text="checkin.team_name || 'N/A'"></td>
+                                        <td x-text="formatDateTime(checkin.checked_in_at)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div x-show="!report.recent_checkins || report.recent_checkins.length === 0" class="text-center py-8 text-base-content/50">
+                    <p>No check-ins yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Empty State -->
+    <div x-show="!loading && !selectedEventId" class="text-center py-12">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mx-auto text-base-content/30 mb-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+        </svg>
+        <p class="text-lg text-base-content/50">Select an event to view reports</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function reportsManager() {
+    return {
+        events: [],
+        selectedEventId: '',
+        report: null,
+        loading: false,
+        
+        async loadEvents() {
+            try {
+                const response = await authFetch('/api/events');
+                if (response.ok) {
+                    this.events = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                showAlert('Error loading events', 'error');
+            }
+        },
+        
+        async loadReport() {
+            if (!this.selectedEventId) return;
+            
+            this.loading = true;
+            try {
+                const response = await authFetch(`/api/reports/event/${this.selectedEventId}`);
+                if (response.ok) {
+                    this.report = await response.json();
+                } else {
+                    showAlert('Error loading report', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading report:', error);
+                showAlert('Error loading report', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async exportReport() {
+            try {
+                const response = await authFetch(`/api/reports/event/${this.selectedEventId}/export`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `report-${this.selectedEventId}.csv`;
+                    a.click();
+                    showAlert('Report exported successfully', 'success');
+                } else {
+                    showAlert('Error exporting report', 'error');
+                }
+            } catch (error) {
+                console.error('Error exporting report:', error);
+                showAlert('Error exporting report', 'error');
+            }
+        },
+        
+        formatDateTime(dateString) {
+            return new Date(dateString).toLocaleString('en-US');
+        }
+    };
+}
+</script>
+{% endblock %}

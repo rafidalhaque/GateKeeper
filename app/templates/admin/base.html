@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard - GateKeeper{% endblock %}</title>
+    
+    <!-- TailwindCSS + DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.0/dist/cdn.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        .drawer-toggle:checked ~ .drawer-side {
+            pointer-events: auto;
+            visibility: visible;
+        }
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="drawer lg:drawer-open">
+        <input id="admin-drawer" type="checkbox" class="drawer-toggle" />
+        
+        <!-- Main Content Area -->
+        <div class="drawer-content flex flex-col">
+            <!-- Top Navbar -->
+            <div class="w-full navbar bg-base-300 shadow-lg">
+                <div class="flex-none lg:hidden">
+                    <label for="admin-drawer" class="btn btn-square btn-ghost">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </label>
+                </div>
+                
+                <div class="flex-1 px-2 mx-2">
+                    <h1 class="text-xl font-bold">{% block page_title %}Admin Dashboard{% endblock %}</h1>
+                </div>
+                
+                <div class="flex-none">
+                    <!-- User Dropdown -->
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-circle avatar placeholder">
+                            <div class="bg-neutral-focus text-neutral-content rounded-full w-10">
+                                <span class="text-xl">A</span>
+                            </div>
+                        </label>
+                        <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                            <li class="menu-title">
+                                <span>Admin User</span>
+                            </li>
+                            <li><a href="/admin/settings">Settings</a></li>
+                            <li><a onclick="handleLogout()">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Page Content -->
+            <div class="flex-1 p-4 lg:p-6">
+                <!-- Breadcrumb -->
+                {% block breadcrumb %}{% endblock %}
+                
+                <!-- Alert Messages -->
+                <div x-data="{ show: false, message: '', type: 'success' }" 
+                     x-show="show"
+                     x-transition
+                     @show-alert.window="show = true; message = $event.detail.message; type = $event.detail.type; setTimeout(() => show = false, 5000)"
+                     class="mb-4">
+                    <div :class="{
+                        'alert-success': type === 'success',
+                        'alert-error': type === 'error',
+                        'alert-warning': type === 'warning',
+                        'alert-info': type === 'info'
+                    }" class="alert shadow-lg">
+                        <span x-text="message"></span>
+                    </div>
+                </div>
+                
+                <!-- Main Content Block -->
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        {% include 'admin/components/nav.html' %}
+    </div>
+    
+    <!-- Custom JS -->
+    <script>
+        // Global utility functions
+        function showAlert(message, type = 'success') {
+            window.dispatchEvent(new CustomEvent('show-alert', {
+                detail: { message, type }
+            }));
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('access_token');
+            window.location.href = '/';
+        }
+        
+        // Set auth token from localStorage for fetch requests with error handling
+        function authFetch(url, options = {}) {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                options.headers = {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`
+                };
+            }
+            return fetch(url, options).then(response => {
+                // Handle authentication failures
+                if (response.status === 401) {
+                    showAlert('Session expired. Please login again.', 'error');
+                    // Optionally redirect to login
+                    // setTimeout(() => window.location.href = '/login', 2000);
+                }
+                return response;
+            });
+        }
+        
+        {% block extra_js %}{% endblock %}
+    </script>
+</body>
+</html>
