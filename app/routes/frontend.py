@@ -38,8 +38,8 @@ def admin_dashboard():
 
 @bp.route('/admin/scanner')
 def admin_scanner():
-    """QR scanner page (admin)"""
-    return render_template('scanner.html', show_nav=True)
+    """QR scanner page (admin) - Requires authentication via client-side JWT"""
+    return render_template('scanner.html')
 
 
 @bp.route('/admin/events')

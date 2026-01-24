@@ -223,7 +223,7 @@ function participantsManager() {
                 event_id: '',
                 team_id: ''
             };
-            window.dispatchEvent(new CustomEvent('open-participant-modal'));
+            this.showModal = true;
         },
         
         openEditModal(participant) {
@@ -234,7 +234,7 @@ function participantsManager() {
                 event_id: participant.event_id,
                 team_id: participant.team_id || ''
             };
-            window.dispatchEvent(new CustomEvent('open-participant-modal'));
+            this.showModal = true;
         },
         
         async saveParticipant() {
@@ -253,7 +253,7 @@ function participantsManager() {
                 if (response.ok) {
                     showAlert(`Participant ${this.editingParticipant ? 'updated' : 'added'} successfully`, 'success');
                     this.fetchData();
-                    window.dispatchEvent(new CustomEvent('close-participant-modal'));
+                    this.showModal = false;
                 } else {
                     const error = await response.json();
                     showAlert(error.error || 'Error saving participant', 'error');

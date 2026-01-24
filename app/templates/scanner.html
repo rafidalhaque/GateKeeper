@@ -1,11 +1,15 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
-{% block title %}QR Scanner - GateKeeper{% endblock %}
+{% block title %}QR Scanner - GateKeeper Admin{% endblock %}
+{% block page_title %}QR Code Scanner{% endblock %}
+
+{% block breadcrumb %}
+{% set breadcrumb_items = [{'name': 'QR Scanner'}] %}
+{% include 'admin/components/breadcrumb.html' %}
+{% endblock %}
 
 {% block content %}
-<div x-data="qrScanner()" class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">QR Code Scanner</h1>
-    
+<div x-data="qrScanner()">
     <!-- Scanner Controls -->
     <div class="card bg-base-100 shadow-xl mb-4">
         <div class="card-body">
@@ -101,7 +105,7 @@ function qrScanner() {
                     requestAnimationFrame(() => this.tick());
                 })
                 .catch(err => {
-                    alert('Error accessing camera: ' + err);
+                    showAlert('Error accessing camera: ' + err, 'error');
                     this.scannerActive = false;
                 });
         },
@@ -148,11 +152,7 @@ function qrScanner() {
             
             // Lookup participant
             try {
-                const response = await fetch(`/api/checkin/lookup/${uuid}`, {
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                    }
-                });
+                const response = await authFetch(`/api/checkin/lookup/${uuid}`);
                 
                 if (response.ok) {
                     this.participantData = await response.json();
@@ -161,19 +161,21 @@ function qrScanner() {
                     if (this.quickScanMode && !this.participantData.attendance_status) {
                         await this.confirmCheckin();
                     }
+                } else {
+                    showAlert('Error looking up participant', 'error');
                 }
             } catch (err) {
                 console.error('Error looking up participant:', err);
+                showAlert('Error looking up participant', 'error');
             }
         },
         
         async confirmCheckin() {
             try {
-                const response = await fetch('/api/checkin/confirm', {
+                const response = await authFetch('/api/checkin/confirm', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         unique_uuid: this.participantData.unique_url_uuid
@@ -182,12 +184,16 @@ function qrScanner() {
                 
                 if (response.ok) {
                     const result = await response.json();
-                    alert('Check-in successful!');
+                    showAlert('Check-in successful!', 'success');
                     this.participantData.attendance_status = true;
                     this.participantData.attended_at = result.attended_at;
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error confirming check-in', 'error');
                 }
             } catch (err) {
-                alert('Error confirming check-in: ' + err);
+                console.error('Error confirming check-in:', err);
+                showAlert('Error confirming check-in', 'error');
             }
         }
     };
