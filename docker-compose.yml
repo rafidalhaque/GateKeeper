@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: gatekeeper
+      POSTGRES_PASSWORD: gatekeeper_password
+      POSTGRES_DB: gatekeeper
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - gatekeeper-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gatekeeper"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - gatekeeper-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flask application
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://gatekeeper:gatekeeper_password@postgres:5432/gatekeeper
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gatekeeper-network
+    volumes:
+      - ./uploads:/app/uploads
+      - ./tmp:/app/tmp
+    command: >
+      sh -c "
+        flask db upgrade &&
+        gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 run:app
+      "
+
+  # Celery worker
+  celery-worker:
+    build: .
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://gatekeeper:gatekeeper_password@postgres:5432/gatekeeper
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gatekeeper-network
+    volumes:
+      - ./uploads:/app/uploads
+      - ./tmp:/app/tmp
+    command: celery -A app.celery_app worker --loglevel=info
+
+  # Celery beat (for scheduled tasks)
+  celery-beat:
+    build: .
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://gatekeeper:gatekeeper_password@postgres:5432/gatekeeper
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gatekeeper-network
+    command: celery -A app.celery_app beat --loglevel=info
+
+volumes:
+  postgres_data:
+
+networks:
+  gatekeeper-network:
+    driver: bridge
