@@ -105,7 +105,7 @@ function qrScanner() {
                     requestAnimationFrame(() => this.tick());
                 })
                 .catch(err => {
-                    alert('Error accessing camera: ' + err);
+                    showAlert('Error accessing camera: ' + err, 'error');
                     this.scannerActive = false;
                 });
         },
