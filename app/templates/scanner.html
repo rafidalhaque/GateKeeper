@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div x-data="qrScanner()" x-init="checkAuth()">
+<div x-data="qrScanner()">
     <!-- Scanner Controls -->
     <div class="card bg-base-100 shadow-xl mb-4">
         <div class="card-body">
@@ -92,18 +92,6 @@ function qrScanner() {
         video: null,
         canvasElement: null,
         canvas: null,
-        
-        checkAuth() {
-            // Check if user is authenticated
-            const token = localStorage.getItem('access_token');
-            if (!token) {
-                showAlert('Authentication required. Redirecting to login...', 'error');
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
-                return;
-            }
-        },
         
         startScanner() {
             this.scannerActive = true;

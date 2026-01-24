@@ -97,8 +97,13 @@
             const token = localStorage.getItem('access_token');
             if (!token) {
                 // No token found - redirect to home/login
-                alert('Authentication required. Please log in to access the admin panel.');
-                window.location.href = '/';
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'fixed top-4 right-4 z-50 alert alert-error shadow-lg max-w-md';
+                alertDiv.innerHTML = '<span>Authentication required. Please log in to access the admin panel.</span>';
+                document.body.appendChild(alertDiv);
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
             }
         })();
         
