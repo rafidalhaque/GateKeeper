@@ -53,7 +53,7 @@ requests==2.31.0
 click==8.1.7
 
 # Production server
-gunicorn==21.2.0
+gunicorn==22.0.0
 
 # Development tools
 flask-shell-ipython==0.4.1
