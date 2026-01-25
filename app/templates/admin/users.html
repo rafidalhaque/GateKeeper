@@ -60,7 +60,7 @@
                                     </td>
                                     <td x-text="formatDate(user.created_at)"></td>
                                     <td>
-                                        <button class="btn btn-xs btn-ghost" @click="openEditRoleModal(user)">Edit Role</button>
+                                        <button class="btn btn-xs btn-ghost" @click="openEditUserRoleModal(user)">Edit Role</button>
                                     </td>
                                 </tr>
                             </template>
@@ -537,8 +537,8 @@ function usersManager() {
             }
         },
 
-        openEditRoleModal(user) {
-            console.log('Opening edit role modal for user:', user);
+        openEditUserRoleModal(user) {
+            console.log('Opening edit user role modal for user:', user);
             this.editingUser = user;
             this.userRoleForm = {
                 role_id: user.role_id || '',
