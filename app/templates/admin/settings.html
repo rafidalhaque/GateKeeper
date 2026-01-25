@@ -107,18 +107,131 @@
     </div>
     
     <!-- API Documentation -->
-    <div class="card bg-base-100 shadow-xl">
+    <div class="card bg-base-100 shadow-xl mb-6">
         <div class="card-body">
-            <h2 class="card-title mb-4">API Documentation</h2>
-            <p class="mb-4">Access the API documentation for integration and development.</p>
-            
-            <div class="flex gap-2">
-                <a href="/docs/API.md" target="_blank" class="btn btn-primary">
+            <h2 class="card-title mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                </svg>
+                API Documentation
+            </h2>
+
+            <p class="mb-4">Access the comprehensive API documentation for integration and development. The API follows RESTful conventions and uses JWT authentication.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="stat bg-base-200 rounded-lg">
+                    <div class="stat-title">API Version</div>
+                    <div class="stat-value text-primary text-2xl">v1.0.0</div>
+                    <div class="stat-desc">OpenAPI 3.0 Specification</div>
+                </div>
+
+                <div class="stat bg-base-200 rounded-lg">
+                    <div class="stat-title">Authentication</div>
+                    <div class="stat-value text-secondary text-2xl">JWT</div>
+                    <div class="stat-desc">Supabase Auth Integration</div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="font-bold">Interactive API Explorer</h3>
+                    <div class="text-xs">Try out API endpoints directly in your browser with the Swagger UI interface</div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <a href="/api/docs" target="_blank" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                    Open Swagger UI
+                    <span class="badge badge-sm">Interactive</span>
+                </a>
+
+                <a href="/api/swagger.json" target="_blank" class="btn btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12h9.75m-9.75 3H18m-15-3h.008v.008H3v-.008z" />
+                    </svg>
+                    Download OpenAPI Spec
+                </a>
+
+                <a href="/docs/API.md" target="_blank" class="btn btn-outline">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
-                    View API Documentation
+                    Markdown Docs
                 </a>
+            </div>
+
+            <div class="divider">API Features</div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="flex items-start gap-2">
+                    <span class="badge badge-success mt-1">✓</span>
+                    <div>
+                        <div class="font-semibold">Event Management</div>
+                        <div class="text-sm opacity-70">CRUD operations for events</div>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="badge badge-success mt-1">✓</span>
+                    <div>
+                        <div class="font-semibold">Participant Management</div>
+                        <div class="text-sm opacity-70">Registration and tracking</div>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="badge badge-success mt-1">✓</span>
+                    <div>
+                        <div class="font-semibold">Team Management</div>
+                        <div class="text-sm opacity-70">Team creation and assignment</div>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="badge badge-success mt-1">✓</span>
+                    <div>
+                        <div class="font-semibold">Check-in System</div>
+                        <div class="text-sm opacity-70">Real-time attendance tracking</div>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="badge badge-success mt-1">✓</span>
+                    <div>
+                        <div class="font-semibold">Ticket Generation</div>
+                        <div class="text-sm opacity-70">Unique QR code tickets</div>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="badge badge-success mt-1">✓</span>
+                    <div>
+                        <div class="font-semibold">Email Notifications</div>
+                        <div class="text-sm opacity-70">Automated email delivery</div>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="badge badge-success mt-1">✓</span>
+                    <div>
+                        <div class="font-semibold">CSV Import/Export</div>
+                        <div class="text-sm opacity-70">Bulk data operations</div>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="badge badge-success mt-1">✓</span>
+                    <div>
+                        <div class="font-semibold">Reports & Analytics</div>
+                        <div class="text-sm opacity-70">Event statistics</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -127,7 +240,7 @@
 
 {% block extra_js %}
 <script>
-function settingsManager() {
+window.settingsManager = function() {
     return {
         settings: {
             environment: 'production',

@@ -41,6 +41,7 @@ def create_app(config_name='default'):
     from app.routes import csv_import as csv_bp
     from app.routes import frontend as frontend_bp
     from app.routes import auth as auth_bp
+    from app.routes import api_docs as api_docs_bp
 
     app.register_blueprint(events_bp.bp)
     app.register_blueprint(participants_bp.bp)
@@ -53,6 +54,8 @@ def create_app(config_name='default'):
     app.register_blueprint(csv_bp.bp)
     app.register_blueprint(frontend_bp.bp)
     app.register_blueprint(auth_bp.bp)
+    app.register_blueprint(api_docs_bp.bp, url_prefix='/api')
+    app.register_blueprint(api_docs_bp.swaggerui_blueprint, url_prefix=api_docs_bp.SWAGGER_URL)
 
     # Register CLI commands
     from app.cli import register_commands
