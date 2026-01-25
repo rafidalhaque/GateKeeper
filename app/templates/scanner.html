@@ -144,25 +144,61 @@ function qrScanner() {
         },
         
         async handleQRCode(qrData) {
-            // Extract UUID from URL
-            const uuidMatch = qrData.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-            if (!uuidMatch) return;
-            
-            const uuid = uuidMatch[0];
-            
+            console.log('QR Code scanned:', qrData);
+
+            // Try to extract UUID from the QR data
+            // It could be either a plain UUID or a URL containing a UUID
+            let uuid = null;
+
+            // First, check if it's already a valid UUID
+            const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (uuidPattern.test(qrData.trim())) {
+                uuid = qrData.trim();
+            } else {
+                // Try to extract UUID from URL or text
+                const uuidMatch = qrData.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+                if (uuidMatch) {
+                    uuid = uuidMatch[0];
+                }
+            }
+
+            if (!uuid) {
+                console.error('No valid UUID found in QR code');
+                showAlert('Invalid QR code format', 'error');
+                return;
+            }
+
+            console.log('Extracted UUID:', uuid);
+
+            // Prevent duplicate scans
+            if (this.participantData && this.participantData.unique_url_uuid === uuid) {
+                console.log('Duplicate scan detected, ignoring');
+                return;
+            }
+
             // Lookup participant
             try {
                 const response = await authFetch(`/api/checkin/lookup/${uuid}`);
                 
                 if (response.ok) {
                     this.participantData = await response.json();
-                    
+                    console.log('Participant data:', this.participantData);
+
+                    // Show feedback
+                    if (this.participantData.attendance_status) {
+                        showAlert(`${this.participantData.name} - Already checked in!`, 'warning');
+                    } else {
+                        showAlert(`${this.participantData.name} - Found!`, 'success');
+                    }
+
                     // Auto check-in if quick scan mode
                     if (this.quickScanMode && !this.participantData.attendance_status) {
                         await this.confirmCheckin();
                     }
                 } else {
-                    showAlert('Error looking up participant', 'error');
+                    const error = await response.json();
+                    console.error('Lookup error:', error);
+                    showAlert(error.error || 'Participant not found', 'error');
                 }
             } catch (err) {
                 console.error('Error looking up participant:', err);
@@ -171,29 +207,50 @@ function qrScanner() {
         },
         
         async confirmCheckin() {
+            if (!this.participantData || !this.participantData.unique_url_uuid) {
+                console.error('Missing participant data or UUID');
+                showAlert('Error: Missing participant data', 'error');
+                return;
+            }
+
+            console.log('Confirming check-in for UUID:', this.participantData.unique_url_uuid);
+
             try {
+                const payload = {
+                    unique_uuid: this.participantData.unique_url_uuid
+                };
+
+                console.log('Sending check-in payload:', payload);
+
                 const response = await authFetch('/api/checkin/confirm', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        unique_uuid: this.participantData.unique_url_uuid
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 if (response.ok) {
                     const result = await response.json();
-                    showAlert('Check-in successful!', 'success');
+                    console.log('Check-in result:', result);
+                    showAlert(`✓ ${this.participantData.name} checked in!`, 'success');
                     this.participantData.attendance_status = true;
                     this.participantData.attended_at = result.attended_at;
+
+                    // Clear participant data after 3 seconds in quick scan mode
+                    if (this.quickScanMode) {
+                        setTimeout(() => {
+                            this.participantData = null;
+                        }, 3000);
+                    }
                 } else {
                     const error = await response.json();
+                    console.error('Check-in error:', error);
                     showAlert(error.error || 'Error confirming check-in', 'error');
                 }
             } catch (err) {
                 console.error('Error confirming check-in:', err);
-                showAlert('Error confirming check-in', 'error');
+                showAlert('Error confirming check-in: ' + err.message, 'error');
             }
         }
     };

@@ -10,10 +10,10 @@ from app.models import db
 from app.models.events import Event, Participant
 
 
-def generate_qr_code(url):
+def generate_qr_code(participant_uuid):
     """Generate QR code as base64 string"""
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
-    qr.add_data(url)
+    qr.add_data(participant_uuid)
     qr.make(fit=True)
     
     img = qr.make_image(fill_color="black", back_color="white")
@@ -71,8 +71,7 @@ def render_ticket_template(event, participant):
     
     # Prepare context
     from flask import current_app
-    ticket_url = f"{current_app.config['APP_URL']}/ticket/{participant.unique_url_uuid}"
-    qr_code = generate_qr_code(ticket_url)
+    qr_code = generate_qr_code(participant.unique_url_uuid)
     
     context = {
         'event_name': event.name,

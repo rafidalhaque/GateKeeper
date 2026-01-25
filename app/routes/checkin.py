@@ -22,6 +22,7 @@ def lookup_participant(unique_uuid):
     
     response = {
         'id': str(participant.id),
+        'unique_url_uuid': str(participant.unique_url_uuid),
         'name': participant.name,
         'email': participant.email,
         't_shirt_size': participant.t_shirt_size,
