@@ -119,6 +119,13 @@ def admin_settings():
     return render_template('admin/settings.html', config=get_supabase_config())
 
 
+@bp.route('/admin/ticket-designer')
+@admin_required
+def admin_ticket_designer():
+    """Ticket designer page"""
+    return render_template('admin/ticket_designer.html', config=get_supabase_config())
+
+
 @bp.route('/accept-invitation')
 def accept_invitation():
     """Invitation acceptance page (public)"""

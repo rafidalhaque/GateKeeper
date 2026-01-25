@@ -1,0 +1,679 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Ticket Designer{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Ensure textareas have proper scrolling and are resizable */
+    textarea.ticket-editor {
+        overflow-y: auto !important;
+        resize: vertical !important;
+        min-height: 400px;
+    }
+
+    /* Ensure preview container is scrollable */
+    .preview-container {
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+    }
+
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Make sure the page itself is scrollable */
+    .drawer-content {
+        overflow-y: auto;
+        height: 100vh;
+    }
+
+    /* Equal height cards for side-by-side layout */
+    @media (min-width: 1024px) {
+        .grid.lg\\:grid-cols-2 > .card {
+            height: 100%;
+        }
+
+        .grid.lg\\:grid-cols-2 > .card .card-body {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .grid.lg\\:grid-cols-2 > .card .preview-container,
+        .grid.lg\\:grid-cols-2 > .card textarea.ticket-editor {
+            flex: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="ticketDesigner()">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">Ticket Design Playground</h1>
+            <p class="text-base-content/70 mt-1">Design custom ticket templates with HTML & CSS</p>
+        </div>
+        <div class="flex gap-2">
+            <button @click="loadTemplate()" class="btn btn-secondary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Load Template
+            </button>
+            <button @click="resetToDefault()" class="btn btn-ghost btn-sm">Reset to Default</button>
+            <button @click="previewTicket()" class="btn btn-primary btn-sm" :disabled="loading">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Preview
+            </button>
+            <button @click="saveTemplate()" class="btn btn-success btn-sm" :disabled="loading || !selectedEventId">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Save Template
+            </button>
+        </div>
+    </div>
+
+    <!-- Event Selector -->
+    <div class="card bg-base-200 mb-4">
+        <div class="card-body">
+            <div class="flex gap-4 items-end">
+                <div class="form-control flex-1">
+                    <label class="label">
+                        <span class="label-text font-semibold">Select Event</span>
+                    </label>
+                    <select x-model="selectedEventId" @change="loadEventTemplate()" class="select select-bordered w-full">
+                        <option value="">Choose an event...</option>
+                        <template x-for="event in events" :key="event.id">
+                            <option :value="event.id" x-text="`${event.name} - ${event.date}`"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="form-control flex-1">
+                    <label class="label">
+                        <span class="label-text font-semibold">Sample Participant (for preview)</span>
+                    </label>
+                    <select x-model="selectedParticipantId" class="select select-bordered w-full" :disabled="!selectedEventId">
+                        <option value="">Choose a participant...</option>
+                        <template x-for="participant in participants" :key="participant.id">
+                            <option :value="participant.id" x-text="participant.name"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editor and Live Preview Layout - Side by Side -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- HTML/CSS Editor -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="card-title flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        HTML Template (with inline CSS)
+                    </h2>
+                    <button @click="downloadPreviewPDF()" class="btn btn-sm btn-ghost" :disabled="!previewHtml">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        PDF
+                    </button>
+                </div>
+                <div class="form-control flex-1">
+                    <textarea
+                        x-model="htmlTemplate"
+                        @input="debouncedPreview()"
+                        class="textarea textarea-bordered font-mono text-sm ticket-editor"
+                        style="height: 600px;"
+                        placeholder="Enter your HTML template with inline CSS in <style> tags..."
+                        spellcheck="false"
+                    ></textarea>
+                </div>
+
+                <!-- Available Placeholders -->
+                <div class="collapse collapse-arrow bg-base-200 mt-2">
+                    <input type="checkbox" />
+                    <div class="collapse-title font-medium text-sm">
+                        📋 Available Placeholders
+                    </div>
+                    <div class="collapse-content">
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <code class="badge badge-sm">{{ '{{' }} event_name {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} event_date {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} venue {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} participant_name {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} email {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} participant_uuid {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} team_name {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} team_id {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} t_shirt_size {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} qr_code {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} custom_fields.* {{ '}}' }}</code>
+                            <code class="badge badge-sm">{{ '{{' }} schedule {{ '}}' }}</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Live Preview
+                    <span x-show="loading" class="loading loading-spinner loading-sm ml-2"></span>
+                </h2>
+
+                <!-- Preview Container -->
+                <div class="preview-container border-2 border-base-300 rounded-lg p-4 bg-white" style="height: 600px; overflow: auto;">
+                    <div x-show="!loading && previewHtml" x-html="previewHtml"></div>
+
+                    <!-- No Preview State -->
+                    <div x-show="!previewHtml && !loading" class="flex flex-col items-center justify-center h-full text-base-content/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="text-center">
+                            Select an event and start editing<br>
+                            <span class="text-sm">Preview updates automatically</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Library Modal -->
+    <div x-show="showTemplatesModal" class="modal modal-open" @click.self="showTemplatesModal = false">
+        <div class="modal-box max-w-4xl">
+            <h3 class="font-bold text-lg mb-4">Template Library</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <template x-for="template in templateLibrary" :key="template.id">
+                    <div class="card bg-base-200 cursor-pointer hover:shadow-lg transition-shadow" @click="applyTemplate(template)">
+                        <div class="card-body">
+                            <h4 class="card-title text-base" x-text="template.name"></h4>
+                            <p class="text-sm opacity-70" x-text="template.description"></p>
+                            <div class="card-actions justify-end">
+                                <button class="btn btn-primary btn-sm">Use Template</button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="modal-action">
+                <button class="btn" @click="showTemplatesModal = false">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function ticketDesigner() {
+    return {
+        loading: false,
+        events: [],
+        participants: [],
+        selectedEventId: '',
+        selectedParticipantId: '',
+        htmlTemplate: '',
+        previewHtml: '',
+        showTemplatesModal: false,
+        templateLibrary: [],
+        debounceTimer: null,
+
+        async init() {
+            await this.loadEvents();
+            this.loadTemplateLibrary();
+            this.resetToDefault();
+            // Auto-preview on init if event selected
+            if (this.selectedEventId) {
+                this.previewTicket();
+            }
+        },
+
+        async loadEvents() {
+            try {
+                const response = await fetch('/api/events', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('supabase_token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    this.events = await response.json();
+                }
+            } catch (error) {
+                console.error('Failed to load events:', error);
+            }
+        },
+
+        async loadEventTemplate() {
+            if (!this.selectedEventId) return;
+
+            try {
+                // Load event template
+                const response = await fetch(`/api/events/${this.selectedEventId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('supabase_token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const event = await response.json();
+                    if (event.ticket_template_html) {
+                        this.htmlTemplate = event.ticket_template_html;
+                    }
+                    // Note: CSS is now inline in HTML, no separate field
+                }
+
+                // Load participants for preview
+                await this.loadParticipants();
+
+                // Auto-preview after loading
+                this.previewTicket();
+            } catch (error) {
+                console.error('Failed to load event template:', error);
+            }
+        },
+
+        async loadParticipants() {
+            if (!this.selectedEventId) return;
+
+            try {
+                const response = await fetch(`/api/participants?event_id=${this.selectedEventId}&limit=10`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('supabase_token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    this.participants = await response.json();
+                    if (this.participants.length > 0 && !this.selectedParticipantId) {
+                        this.selectedParticipantId = this.participants[0].id;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load participants:', error);
+            }
+        },
+
+        async previewTicket() {
+            if (!this.selectedEventId) {
+                return; // Silent fail, no alert
+            }
+
+            this.loading = true;
+
+            try {
+                const response = await fetch('/api/tickets/preview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('supabase_token')}`
+                    },
+                    body: JSON.stringify({
+                        event_id: this.selectedEventId,
+                        participant_id: this.selectedParticipantId || null,
+                        html_template: this.htmlTemplate,
+                        css_template: '' // CSS is inline in HTML
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.previewHtml = data.html;
+                } else {
+                    const error = await response.json();
+                    console.error('Preview failed:', error);
+                }
+            } catch (error) {
+                console.error('Preview error:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        debouncedPreview() {
+            clearTimeout(this.debounceTimer);
+            this.debounceTimer = setTimeout(() => {
+                if (this.selectedEventId) {
+                    this.previewTicket();
+                }
+            }, 500); // 500ms delay for faster response
+        },
+
+        async saveTemplate() {
+            if (!this.selectedEventId) {
+                alert('Please select an event first');
+                return;
+            }
+
+            this.loading = true;
+
+            try {
+                const response = await fetch(`/api/events/${this.selectedEventId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('supabase_token')}`
+                    },
+                    body: JSON.stringify({
+                        ticket_template_html: this.htmlTemplate,
+                        ticket_template_css: '' // CSS is inline in HTML
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Template saved successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Save failed: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('Failed to save template');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async downloadPreviewPDF() {
+            if (!this.selectedEventId || !this.selectedParticipantId) {
+                alert('Please select an event and participant first');
+                return;
+            }
+
+            this.loading = true;
+
+            try {
+                const response = await fetch('/api/tickets/preview-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('supabase_token')}`
+                    },
+                    body: JSON.stringify({
+                        event_id: this.selectedEventId,
+                        participant_id: this.selectedParticipantId,
+                        html_template: this.htmlTemplate,
+                        css_template: '' // CSS is inline
+                    })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'ticket_preview.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('Failed to generate PDF');
+                }
+            } catch (error) {
+                console.error('PDF download error:', error);
+                alert('Failed to download PDF');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        resetToDefault() {
+            this.htmlTemplate = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        /* Page setup for PDF */
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .ticket {
+            border: 2px solid #333;
+            padding: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            color: #333;
+        }
+
+        .info-section {
+            margin: 20px 0;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .info-label {
+            font-weight: bold;
+            width: 150px;
+        }
+
+        .qr-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .qr-section img {
+            max-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="header">
+            <h1>{{ event_name }}</h1>
+            <p>{{ event_date }} • {{ venue }}</p>
+        </div>
+
+        <div class="info-section">
+            <div class="info-row">
+                <span class="info-label">Participant:</span>
+                <span>{{ participant_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span>{{ email }}</span>
+            </div>
+            {% if team_name %}
+            <div class="info-row">
+                <span class="info-label">Team:</span>
+                <span>{{ team_name }} (ID: {{ team_id }})</span>
+            </div>
+            {% endif %}
+            {% if t_shirt_size %}
+            <div class="info-row">
+                <span class="info-label">T-Shirt Size:</span>
+                <span>{{ t_shirt_size }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="qr-section">
+            <img src="{{ qr_code }}" alt="QR Code">
+            <p><small>{{ participant_uuid }}</small></p>
+        </div>
+    </div>
+</body>
+</html>`;
+        },
+
+        loadTemplate() {
+            this.showTemplatesModal = true;
+        },
+
+        loadTemplateLibrary() {
+            this.templateLibrary = [
+                {
+                    id: 'default',
+                    name: 'Default Template',
+                    description: 'Clean and professional ticket design',
+                    html: this.htmlTemplate
+                },
+                {
+                    id: 'minimal',
+                    name: 'Minimal',
+                    description: 'Simple and elegant design with minimal styling',
+                    html: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page { size: A4; margin: 1cm; }
+        body { font-family: Arial, sans-serif; padding: 40px; }
+        .ticket {
+            max-width: 500px;
+            margin: 0 auto;
+            border: 1px solid #000;
+            padding: 40px;
+        }
+        h1 { text-align: center; font-size: 28px; margin: 0; }
+        p { text-align: center; margin: 10px 0 30px; }
+        .qr-section { text-align: center; margin-top: 30px; }
+        .qr-section img { max-width: 150px; }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <h1>{{ event_name }}</h1>
+        <p>{{ event_date }}</p>
+        <p><strong>{{ participant_name }}</strong></p>
+        <p>{{ email }}</p>
+        <div class="qr-section">
+            <img src="{{ qr_code }}">
+        </div>
+    </div>
+</body>
+</html>`
+                },
+                {
+                    id: 'colorful',
+                    name: 'Colorful',
+                    description: 'Vibrant and eye-catching ticket design',
+                    html: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page { size: A4; margin: 1cm; }
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .ticket {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .header h1 { margin: 0; font-size: 36px; }
+        .header p { margin: 10px 0 0; font-size: 18px; }
+        .info { padding: 20px; }
+        .info p { font-size: 20px; margin: 10px 0; }
+        .info strong { color: #667eea; }
+        {% if team_name %}
+        .team {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        {% endif %}
+        .qr-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        .qr-section img { max-width: 200px; }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="header">
+            <h1>{{ event_name }}</h1>
+            <p>{{ event_date }}</p>
+        </div>
+        <div class="info">
+            <p><strong>{{ participant_name }}</strong></p>
+            <p>{{ email }}</p>
+            {% if team_name %}
+            <p class="team"><strong>Team:</strong> {{ team_name }}</p>
+            {% endif %}
+        </div>
+        <div class="qr-section">
+            <img src="{{ qr_code }}">
+        </div>
+    </div>
+</body>
+</html>`
+                }
+            ];
+        },
+
+        applyTemplate(template) {
+            this.htmlTemplate = template.html;
+            this.showTemplatesModal = false;
+            if (this.selectedEventId) {
+                this.previewTicket();
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

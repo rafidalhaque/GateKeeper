@@ -40,6 +40,7 @@ def register_commands(app):
             
             # Tickets
             ('ticket.read', 'Read ticket data', 'tickets'),
+            ('ticket.create', 'Create and design tickets', 'tickets'),
             ('ticket.generate', 'Generate tickets', 'tickets'),
             ('ticket.send', 'Send tickets', 'tickets'),
             
@@ -121,7 +122,7 @@ def register_commands(app):
                 'participant.read', 'participant.create', 'participant.update', 'participant.delete',
                 'team.read', 'team.create', 'team.update', 'team.delete',
                 'attendance.read', 'attendance.mark',
-                'ticket.read', 'ticket.generate', 'ticket.send',
+                'ticket.read', 'ticket.create', 'ticket.generate', 'ticket.send',
                 'email.read_logs', 'email.send_bulk',
                 'email_template.read', 'email_template.create', 'email_template.update',
                 'email_template.delete', 'email_template.test',
