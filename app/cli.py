@@ -44,6 +44,13 @@ def register_commands(app):
             ('email.read_logs', 'Read email logs', 'emails'),
             ('email.send_bulk', 'Send bulk emails', 'emails'),
             
+            # Email Templates
+            ('email_template.read', 'Read email templates', 'email_templates'),
+            ('email_template.create', 'Create email templates', 'email_templates'),
+            ('email_template.update', 'Update email templates', 'email_templates'),
+            ('email_template.delete', 'Delete email templates', 'email_templates'),
+            ('email_template.test', 'Send test emails', 'email_templates'),
+
             # CSV Import
             ('csv.import', 'Import CSV data', 'csv'),
             
@@ -112,6 +119,8 @@ def register_commands(app):
                 'attendance.read', 'attendance.mark',
                 'ticket.read', 'ticket.generate', 'ticket.send',
                 'email.read_logs', 'email.send_bulk',
+                'email_template.read', 'email_template.create', 'email_template.update',
+                'email_template.delete', 'email_template.test',
                 'csv.import',
                 'event.read', 'event.update', 'event.configure',
                 'report.read', 'report.export'

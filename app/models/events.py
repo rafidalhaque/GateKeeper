@@ -145,3 +145,22 @@ class CeleryJob(db.Model):
     
     def __repr__(self):
         return f'<CeleryJob {self.task_name} - {self.status}>'
+
+
+class EmailTemplate(db.Model):
+    """Email template model for managing email designs"""
+    __tablename__ = 'email_templates'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(String(255), nullable=False)
+    type = db.Column(String(50), nullable=False)  # 'ticket', 'announcement', 'reminder', 'custom'
+    subject = db.Column(String(500), nullable=False)
+    description = db.Column(Text)
+    html_content = db.Column(Text, nullable=False)
+    text_content = db.Column(Text)  # plain text fallback
+    created_at = db.Column(DateTime, default=datetime.utcnow)
+    updated_at = db.Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<EmailTemplate {self.name}>'
+
