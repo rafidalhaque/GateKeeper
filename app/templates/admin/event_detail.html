@@ -9,7 +9,7 @@
 {% include 'admin/components/breadcrumb.html' %}
 
 {% block content %}
-<div x-data="eventDetail('{{ event.id }}')" x-init="loadEvent()">
+<div x-data="eventDetail('{{ event_id }}')" x-init="loadEvent()">
     <!-- Loading State -->
     <div x-show="loading" class="flex justify-center items-center py-12">
         <span class="loading loading-spinner loading-lg"></span>
