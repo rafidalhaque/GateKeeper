@@ -54,7 +54,7 @@
                                 <span>Admin User</span>
                             </li>
                             <li><a href="/admin/settings">Settings</a></li>
-                            <li><a id="navLogoutBtn">Logout</a></li>
+                            <li><a id="navLogoutBtn" href="#" class="logout-btn" data-action="logout">Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -92,8 +92,8 @@
     
     <!-- Custom JS -->
     <script>
-        // Simple logout function
-        async function handleLogout() {
+        // Define logout function globally FIRST
+        window.handleLogout = async function() {
             console.log('Logout function called');
             try {
                 console.log('Calling logout API...');
@@ -118,47 +118,89 @@
                 // Force redirect anyway
                 window.location.href = '/login';
             }
-        }
+        };
+
+        // Make sure function is available immediately
+        console.log('handleLogout function defined globally:', typeof window.handleLogout);
 
         // Attach logout handlers to all logout buttons
-        document.addEventListener('DOMContentLoaded', function() {
+        function attachLogoutHandlers() {
             console.log('Attaching logout handlers...');
 
-            // Handle all logout buttons by class or ID
-            const logoutButtons = [
-                document.getElementById('navLogoutBtn'),    // Navbar dropdown
-                document.getElementById('logoutBtn')        // Sidebar
+            // Handle all logout buttons by ID and class
+            const logoutSelectors = [
+                '#navLogoutBtn',    // Navbar dropdown
+                '#logoutBtn',       // Sidebar
+                'a[href*="logout"]', // Any link with logout
+                '.logout-btn',      // Any logout button class
+                '[data-action="logout"]' // Any element with logout action
             ];
 
-            logoutButtons.forEach((btn, index) => {
-                if (btn) {
-                    console.log(`Found logout button ${index + 1}:`, btn.id || btn.className);
-                    btn.addEventListener('click', function(e) {
+            let handlersAttached = 0;
+
+            logoutSelectors.forEach((selector, index) => {
+                const elements = document.querySelectorAll(selector);
+                console.log(`Selector "${selector}" found ${elements.length} elements`);
+
+                elements.forEach((element, elemIndex) => {
+                    if (!element.hasAttribute('data-logout-handler')) {
+                        console.log(`Attaching handler to element ${elemIndex + 1} for selector "${selector}"`);
+                        element.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            console.log('Logout button clicked:', selector);
+                            window.handleLogout();
+                        });
+                        element.setAttribute('data-logout-handler', 'true');
+                        handlersAttached++;
+                    }
+                });
+            });
+
+            // Also handle text-based logout detection
+            const allLinks = document.querySelectorAll('a');
+            allLinks.forEach(link => {
+                if (link.textContent.toLowerCase().includes('logout') &&
+                    !link.hasAttribute('data-logout-handler')) {
+                    console.log('Found text-based logout link:', link.textContent.trim());
+                    link.addEventListener('click', function(e) {
                         e.preventDefault();
-                        console.log('Logout button clicked:', btn.id || btn.className);
-                        handleLogout();
+                        console.log('Text-based logout clicked');
+                        window.handleLogout();
                     });
-                } else {
-                    console.log(`Logout button ${index + 1} not found`);
+                    link.setAttribute('data-logout-handler', 'true');
+                    handlersAttached++;
                 }
             });
 
-            // Also handle any button with logout in the text as backup
-            const allButtons = document.querySelectorAll('a');
-            allButtons.forEach(button => {
-                if (button.textContent.toLowerCase().includes('logout')) {
-                    if (!button.hasAttribute('data-logout-handled')) {
-                        console.log('Found additional logout button:', button.textContent.trim());
-                        button.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            console.log('Additional logout button clicked');
-                            handleLogout();
-                        });
-                        button.setAttribute('data-logout-handled', 'true');
-                    }
+            console.log(`Total logout handlers attached: ${handlersAttached}`);
+            return handlersAttached;
+        }
+
+        // Attach handlers when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, attaching logout handlers...');
+            const count = attachLogoutHandlers();
+
+            if (count === 0) {
+                console.warn('No logout buttons found on initial load');
+            }
+
+            // Re-scan for logout buttons every 2 seconds (in case they're added dynamically)
+            setInterval(function() {
+                const additionalCount = attachLogoutHandlers();
+                if (additionalCount > 0) {
+                    console.log('Found and attached additional logout buttons:', additionalCount);
                 }
-            });
+            }, 2000);
         });
+
+        // Also try to attach immediately (in case DOM is already loaded)
+        if (document.readyState === 'loading') {
+            console.log('Document still loading, will wait for DOMContentLoaded');
+        } else {
+            console.log('Document already loaded, attaching handlers immediately');
+            setTimeout(attachLogoutHandlers, 100);
+        }
 
         // Global alert function
         function showAlert(message, type = 'success') {
@@ -167,9 +209,31 @@
             }));
         }
         
+        // Enhanced authFetch function for API calls
+        async function authFetch(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            };
+
+            const finalOptions = { ...defaultOptions, ...options };
+
+            try {
+                const response = await fetch(url, finalOptions);
+                return response;
+            } catch (error) {
+                console.error('authFetch error:', error);
+                throw error;
+            }
+        }
+
         // Make functions globally accessible
-        window.handleLogout = handleLogout;
         window.showAlert = showAlert;
+        window.authFetch = authFetch;
+
+        // Note: window.handleLogout is already defined above, no need to reassign
 
         {% block extra_js %}{% endblock %}
     </script>
