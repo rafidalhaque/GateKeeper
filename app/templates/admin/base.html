@@ -206,8 +206,11 @@ function attachLogoutHandlers() {
 
         // Enhanced authFetch function for API calls
         async function authFetch(url, options = {}) {
+            // Don't set Content-Type for FormData - browser will set it with boundary
+            const isFormData = options.body instanceof FormData;
+            
             const defaultOptions = {
-                headers: {
+                headers: isFormData ? {} : {
                     'Content-Type': 'application/json',
                     ...options.headers
                 }

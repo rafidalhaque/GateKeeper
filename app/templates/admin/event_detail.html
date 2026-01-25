@@ -5,11 +5,11 @@
 
 {% block breadcrumb %}
 {% set breadcrumb_items = [{'name': 'Events', 'url': '/admin/events'}, {'name': 'Event Details'}] %}
-{% include 'admin/components/breadcrumb.html' %}
 {% endblock %}
+{% include 'admin/components/breadcrumb.html' %}
 
 {% block content %}
-<div x-data="eventDetail('{{ event_id }}')" x-init="loadEvent()">
+<div x-data="eventDetail('{{ event.id }}')" x-init="loadEvent()">
     <!-- Loading State -->
     <div x-show="loading" class="flex justify-center items-center py-12">
         <span class="loading loading-spinner loading-lg"></span>
@@ -21,18 +21,18 @@
             <div class="card-body">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h2 class="card-title text-2xl mb-2" x-text="event.name"></h2>
+                        <h2 class="card-title text-2xl mb-2" x-text="event?.name || 'Event'"></h2>
                         <div class="flex gap-2 mb-4">
-                            <div class="badge" :class="event.mode === 'team' ? 'badge-secondary' : 'badge-primary'" x-text="event.mode"></div>
-                            <div class="badge badge-outline" x-text="formatDate(event.date)"></div>
+                            <div class="badge" :class="event?.mode === 'team' ? 'badge-secondary' : 'badge-primary'" x-text="event?.mode || 'solo'"></div>
+                            <div class="badge badge-outline" x-text="event?.date ? formatDate(event.date) : 'N/A'"></div>
                         </div>
                         <div class="space-y-2 text-sm">
-                            <div class="flex items-center gap-2" x-show="event.venue">
+                            <div class="flex items-center gap-2" x-show="event?.venue">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                                 </svg>
-                                <span x-text="event.venue"></span>
+                                <span x-text="event?.venue || ''"></span>
                             </div>
                         </div>
                     </div>
@@ -69,7 +69,7 @@
         <!-- Tabs -->
         <div class="tabs tabs-boxed mb-4">
             <a class="tab" :class="{ 'tab-active': activeTab === 'participants' }" @click="activeTab = 'participants'">Participants</a>
-            <a class="tab" :class="{ 'tab-active': activeTab === 'teams' }" @click="activeTab = 'teams'" x-show="event.mode === 'team'">Teams</a>
+            <a class="tab" :class="{ 'tab-active': activeTab === 'teams' }" @click="activeTab = 'teams'" x-show="event?.mode === 'team'">Teams</a>
             <a class="tab" :class="{ 'tab-active': activeTab === 'checkins' }" @click="activeTab = 'checkins'">Check-ins</a>
             <a class="tab" :class="{ 'tab-active': activeTab === 'stats' }" @click="activeTab = 'stats'">Statistics</a>
         </div>
@@ -116,7 +116,7 @@
                 </div>
                 
                 <!-- Teams Tab -->
-                <div x-show="activeTab === 'teams' && event.mode === 'team'">
+                <div x-show="activeTab === 'teams' && event?.mode === 'team'">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold">Teams (<span x-text="teams.length"></span>)</h3>
                         <button class="btn btn-sm btn-primary">Create Team</button>
@@ -185,6 +185,9 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modals -->
+    {% include 'admin/components/modals/csv_import.html' %}
 </div>
 {% endblock %}
 
@@ -201,6 +204,8 @@ function eventDetail(eventId) {
         activeTab: 'participants',
         showImportModal: false,
         showAddParticipantModal: false,
+        selectedFile: null,
+        uploadProgress: 0,
         
         async loadEvent() {
             this.loading = true;
@@ -272,18 +277,92 @@ function eventDetail(eventId) {
         
         async generateTickets() {
             try {
-                const response = await authFetch(`/api/tickets/generate/${this.eventId}`, {
-                    method: 'POST'
+                const response = await authFetch('/api/tickets/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event_id: this.eventId })
                 });
                 
                 if (response.ok) {
-                    showAlert('Tickets generated successfully', 'success');
+                    const data = await response.json();
+                    showAlert(`Ticket generation started. Job ID: ${data.job_id}`, 'success');
                 } else {
-                    showAlert('Error generating tickets', 'error');
+                    const error = await response.json();
+                    showAlert(error.error || 'Error generating tickets', 'error');
                 }
             } catch (error) {
                 console.error('Error generating tickets:', error);
                 showAlert('Error generating tickets', 'error');
+            }
+        },
+        
+        handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    showAlert('File size must be less than 5MB', 'error');
+                    event.target.value = '';
+                    return;
+                }
+                
+                // Validate file type
+                if (!file.name.endsWith('.csv')) {
+                    showAlert('Please select a CSV file', 'error');
+                    event.target.value = '';
+                    return;
+                }
+                
+                this.selectedFile = file;
+            }
+        },
+        
+        async importCSV() {
+            if (!this.selectedFile) {
+                showAlert('Please select a file', 'error');
+                return;
+            }
+            
+            try {
+                this.uploadProgress = 10;
+                
+                // Create FormData
+                const formData = new FormData();
+                formData.append('file', this.selectedFile);
+                formData.append('event_id', this.eventId);
+                
+                this.uploadProgress = 30;
+                
+                // Upload CSV (authFetch will auto-detect FormData and skip Content-Type header)
+                const response = await authFetch('/api/import/csv', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                this.uploadProgress = 90;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.uploadProgress = 100;
+                    showAlert(`CSV import started. Job ID: ${data.job_id}`, 'success');
+                    
+                    // Reset and close modal
+                    setTimeout(() => {
+                        this.showImportModal = false;
+                        this.selectedFile = null;
+                        this.uploadProgress = 0;
+                        // Reload participants after a delay
+                        setTimeout(() => this.loadEvent(), 2000);
+                    }, 1000);
+                } else {
+                    const error = await response.json();
+                    this.uploadProgress = 0;
+                    showAlert(error.error || 'Error importing CSV', 'error');
+                }
+            } catch (error) {
+                console.error('Error importing CSV:', error);
+                this.uploadProgress = 0;
+                showAlert('Error importing CSV', 'error');
             }
         },
         

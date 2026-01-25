@@ -1,0 +1,53 @@
+<!-- CSV Import Modal -->
+<div x-show="showImportModal"
+     class="modal" 
+     :class="{ 'modal-open': showImportModal }">
+    <div class="modal-box w-11/12 max-w-2xl">
+        <h3 class="font-bold text-lg mb-4">Import Participants from CSV</h3>
+        
+        <div class="alert alert-info mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <p class="text-sm">CSV file should have the following columns:</p>
+                <p class="text-sm font-mono">name, email, phone (optional), team_name (optional for team events)</p>
+            </div>
+        </div>
+        
+        <form @submit.prevent="importCSV()">
+            <!-- File Upload -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text">Select CSV File *</span>
+                </label>
+                <input type="file" 
+                       accept=".csv"
+                       @change="handleFileSelect($event)"
+                       class="file-input file-input-bordered w-full" 
+                       required>
+                <label class="label">
+                    <span class="label-text-alt">Maximum file size: 5MB</span>
+                </label>
+            </div>
+            
+            <!-- Upload Progress -->
+            <div x-show="uploadProgress > 0 && uploadProgress < 100" class="mb-4">
+                <progress class="progress progress-primary w-full" :value="uploadProgress" max="100"></progress>
+                <p class="text-sm text-center mt-2" x-text="`Uploading: ${uploadProgress}%`"></p>
+            </div>
+            
+            <!-- Modal Actions -->
+            <div class="modal-action">
+                <button type="button" class="btn" @click="showImportModal = false; selectedFile = null; uploadProgress = 0">Cancel</button>
+                <button type="submit" class="btn btn-primary" :disabled="!selectedFile || uploadProgress > 0">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    Import CSV
+                </button>
+            </div>
+        </form>
+    </div>
+    <label class="modal-backdrop" @click="showImportModal = false; selectedFile = null; uploadProgress = 0"></label>
+</div>

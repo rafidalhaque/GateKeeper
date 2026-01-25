@@ -1,11 +1,11 @@
 {% extends "admin/base.html" %}
+{% include 'admin/components/breadcrumb.html' %}
 
 {% block title %}Events Management - GateKeeper Admin{% endblock %}
 {% block page_title %}Events Management{% endblock %}
 
 {% block breadcrumb %}
 {% set breadcrumb_items = [{'name': 'Events'}] %}
-{% include 'admin/components/breadcrumb.html' %}
 {% endblock %}
 
 {% block content %}
@@ -44,7 +44,7 @@
     <!-- Events Grid -->
     <div x-show="!loading && filteredEvents.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <template x-for="event in filteredEvents" :key="event.id">
-            <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div x-show="event" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
                 <div class="card-body">
                     <h2 class="card-title">
                         <span x-text="event.name"></span>
@@ -160,11 +160,14 @@ window.eventsManager = function() {
         },
 
         filterEvents() {
+            // Filter out null/undefined events first
+            const validEvents = this.events.filter(event => event != null);
+            
             if (!this.searchQuery) {
-                this.filteredEvents = this.events;
+                this.filteredEvents = validEvents;
             } else {
                 const query = this.searchQuery.toLowerCase();
-                this.filteredEvents = this.events.filter(event =>
+                this.filteredEvents = validEvents.filter(event =>
                     event.name.toLowerCase().includes(query) ||
                     (event.venue && event.venue.toLowerCase().includes(query))
                 );
@@ -196,12 +199,17 @@ window.eventsManager = function() {
         },
 
         openEditModal(event) {
+            if (!event) {
+                console.error('openEditModal called with null/undefined event');
+                return;
+            }
+            
             this.editingEvent = event;
             this.formData = {
-                name: event.name,
-                date: event.date.split('T')[0],
+                name: event.name || '',
+                date: event.date ? event.date.split('T')[0] : '',
                 venue: event.venue || '',
-                mode: event.mode,
+                mode: event.mode || 'solo',
                 passcode: event.passcode || ''
             };
             this.showModal = true;
