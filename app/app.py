@@ -26,8 +26,9 @@ def create_app(config_name='default'):
     # Configure CORS
     CORS(app, origins=app.config['ALLOWED_ORIGINS'], supports_credentials=True)
     
-    # Import models to ensure they're registered with SQLAlchemy
-    from app.models import events, auth
+    # Import and register all models with SQLAlchemy
+    from app.models import init_models
+    init_models()
     
     # Register blueprints
     from app.routes import events as events_bp

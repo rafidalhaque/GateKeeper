@@ -145,3 +145,8 @@ class CeleryJob(db.Model):
     
     def __repr__(self):
         return f'<CeleryJob {self.task_name} - {self.status}>'
+
+
+# Import AdminUser after all classes are defined to avoid circular import issues
+# This ensures SQLAlchemy can resolve the 'AdminUser' relationship in CheckinLog
+from app.models.auth import AdminUser  # noqa: F401, E402
