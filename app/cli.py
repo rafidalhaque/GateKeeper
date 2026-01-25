@@ -230,8 +230,40 @@ def register_commands(app):
         db.session.add(admin_user)
         db.session.commit()
         
-        click.echo(f'Super admin created successfully!')
-        click.echo(f'  Email: {email}')
-        click.echo(f'  Name: {name}')
+        click.echo(f'✅ Super admin created successfully!')
+        click.echo(f'   Email: {email}')
+        click.echo(f'   Name: {name}')
+        click.echo(f'   Super Admin: True')
         click.echo('\nThe user can now sign in with their Supabase account using this email.')
         click.echo('On first login, their Supabase ID will be automatically linked.')
+
+
+    @app.cli.command('make-super-admin')
+    @click.option('--email', prompt='Email', help='Email of existing admin user')
+    def make_super_admin(email):
+        """Promote an existing admin user to super admin"""
+        click.echo(f'Promoting user to super admin: {email}')
+
+        # Find user
+        user = AdminUser.query.filter_by(email=email).first()
+        if not user:
+            click.echo('❌ Error: User not found!')
+            click.echo('\nAvailable users:')
+            for u in AdminUser.query.all():
+                status = '✓ Super Admin' if u.is_super_admin else '○ Regular Admin'
+                click.echo(f'   {status} - {u.email} ({u.name})')
+            return
+
+        if user.is_super_admin:
+            click.echo(f'ℹ️  User {email} is already a super admin!')
+            return
+
+        # Promote to super admin
+        user.is_super_admin = True
+        db.session.commit()
+
+        click.echo(f'✅ User promoted to super admin successfully!')
+        click.echo(f'   Email: {user.email}')
+        click.echo(f'   Name: {user.name}')
+        click.echo(f'   Super Admin: True')
+        click.echo('\nUser needs to log out and log back in for changes to take effect.')
