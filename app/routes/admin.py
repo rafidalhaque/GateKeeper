@@ -77,8 +77,27 @@ def list_roles():
         'name': role.name,
         'description': role.description,
         'permission_count': len(role.permissions),
-        'user_count': len(role.admin_users)
+        'user_count': len(role.admin_users),
+        'permissions': [{'id': p.id, 'key': p.key, 'description': p.description} for p in role.permissions]
     } for role in roles])
+
+
+@bp.route('/roles/<int:role_id>', methods=['GET'])
+@permission_required('role.read')
+def get_role(role_id):
+    """Get single role with permissions"""
+    role = Role.query.get_or_404(role_id)
+
+    return jsonify({
+        'id': role.id,
+        'name': role.name,
+        'description': role.description,
+        'permission_count': len(role.permissions),
+        'user_count': len(role.admin_users),
+        'permissions': [{'id': p.id, 'key': p.key, 'description': p.description} for p in role.permissions],
+        'created_at': role.created_at.isoformat(),
+        'updated_at': role.updated_at.isoformat() if role.updated_at else None
+    })
 
 
 @bp.route('/roles/<int:role_id>', methods=['PUT'])
@@ -88,6 +107,10 @@ def update_role(role_id):
     role = Role.query.get_or_404(role_id)
     data = request.get_json()
     
+    # Prevent renaming Super Admin role
+    if role.name == 'Super Admin' and 'name' in data and data['name'] != 'Super Admin':
+        return jsonify({'error': 'Cannot rename Super Admin role'}), 403
+
     if 'name' in data:
         role.name = data['name']
     if 'description' in data:
@@ -101,7 +124,7 @@ def update_role(role_id):
     return jsonify({
         'id': role.id,
         'name': role.name,
-        'updated_at': role.updated_at.isoformat()
+        'updated_at': role.updated_at.isoformat() if role.updated_at else None
     })
 
 
@@ -111,6 +134,10 @@ def delete_role(role_id):
     """Delete a role"""
     role = Role.query.get_or_404(role_id)
     
+    # Prevent deletion of Super Admin role
+    if role.name == 'Super Admin':
+        return jsonify({'error': 'Cannot delete Super Admin role'}), 403
+
     # Check if role is in use
     if len(role.admin_users) > 0:
         return jsonify({'error': 'Cannot delete role with assigned users'}), 400
@@ -142,22 +169,31 @@ def list_admin_users():
 @bp.route('/users/<uuid:user_id>/assign-role', methods=['POST'])
 @super_admin_required
 def assign_role(user_id):
-    """Assign role to admin user"""
+    """Assign role to admin user and update super_admin status"""
     user = AdminUser.query.get_or_404(user_id)
     data = request.get_json()
     
     if 'role_id' not in data:
         return jsonify({'error': 'Missing role_id'}), 400
     
-    role = Role.query.get(data['role_id'])
-    if not role:
-        return jsonify({'error': 'Role not found'}), 404
-    
-    user.role_id = role.id
+    # Handle role assignment
+    if data['role_id']:
+        role = Role.query.get(data['role_id'])
+        if not role:
+            return jsonify({'error': 'Role not found'}), 404
+        user.role_id = role.id
+    else:
+        user.role_id = None
+
+    # Handle super_admin status
+    if 'is_super_admin' in data:
+        user.is_super_admin = bool(data['is_super_admin'])
+
     db.session.commit()
     
     return jsonify({
         'user_id': str(user.id),
-        'role_id': role.id,
-        'role_name': role.name
+        'role_id': user.role_id,
+        'role_name': user.role.name if user.role else None,
+        'is_super_admin': user.is_super_admin
     })

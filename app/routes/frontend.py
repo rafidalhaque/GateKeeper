@@ -117,3 +117,11 @@ def admin_users():
 def admin_settings():
     """Settings page"""
     return render_template('admin/settings.html', config=get_supabase_config())
+
+
+@bp.route('/accept-invitation')
+def accept_invitation():
+    """Invitation acceptance page (public)"""
+    token = request.args.get('token')
+    return render_template('accept_invitation.html', token=token, config=get_supabase_config())
+

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept Invitation - GateKeeper</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-base-200">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="card w-full max-w-md bg-base-100 shadow-xl" x-data="invitationAcceptance('{{ token }}')" x-init="verifyInvitation()">
+            <!-- Logo/Header -->
+            <div class="card-body">
+                <div class="text-center mb-6">
+                    <h1 class="text-3xl font-bold text-primary mb-2">GateKeeper</h1>
+                    <p class="text-base-content/60">Admin Invitation</p>
+                </div>
+
+                <!-- Loading State -->
+                <div x-show="loading" class="flex justify-center py-8">
+                    <span class="loading loading-spinner loading-lg"></span>
+                </div>
+
+                <!-- Error State -->
+                <template x-if="error && !loading">
+                    <div class="alert alert-error">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span x-text="error"></span>
+                    </div>
+                </template>
+
+                <!-- Success - Show Form -->
+                <template x-if="invitationValid && !loading">
+                    <div>
+                        <div class="alert alert-info mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div>
+                                <p class="font-semibold">You've been invited to join GateKeeper</p>
+                                <p class="text-xs" x-text="`Email: ${invitationData.email}`"></p>
+                                <p class="text-xs" x-text="`Role: ${invitationData.role_name || 'Not assigned yet'}`"></p>
+                            </div>
+                        </div>
+
+                        <form @submit.prevent="acceptInvitation()">
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text">Your Name</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    class="input input-bordered"
+                                    :value="invitationData.name"
+                                    readonly
+                                >
+                            </div>
+
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text">Email</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    class="input input-bordered"
+                                    :value="invitationData.email"
+                                    readonly
+                                >
+                            </div>
+
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text">Create Password</span>
+                                    <span class="label-text-alt text-error">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    class="input input-bordered"
+                                    x-model="password"
+                                    placeholder="Minimum 8 characters"
+                                    minlength="8"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-control mb-6">
+                                <label class="label">
+                                    <span class="label-text">Confirm Password</span>
+                                    <span class="label-text-alt text-error">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    class="input input-bordered"
+                                    x-model="confirmPassword"
+                                    placeholder="Re-enter password"
+                                    minlength="8"
+                                    required
+                                >
+                            </div>
+
+                            <div class="alert alert-warning mb-4" x-show="password && confirmPassword && password !== confirmPassword">
+                                <span>Passwords do not match</span>
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary w-full"
+                                :disabled="submitting || !password || !confirmPassword || password !== confirmPassword"
+                            >
+                                <span x-show="!submitting">Accept Invitation & Set Password</span>
+                                <span x-show="submitting" class="loading loading-spinner"></span>
+                            </button>
+                        </form>
+                    </div>
+                </template>
+
+                <!-- Success Message -->
+                <template x-if="accepted">
+                    <div>
+                        <div class="alert alert-success mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <div>
+                                <p class="font-semibold">Account created successfully!</p>
+                                <p class="text-xs">Your email has been verified automatically</p>
+                            </div>
+                        </div>
+
+                        <p class="text-center mb-4">Redirecting to login...</p>
+
+                        <a href="/login" class="btn btn-primary w-full">
+                            Go to Login
+                        </a>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script>
+        function invitationAcceptance(token) {
+            return {
+                token: token,
+                loading: true,
+                error: null,
+                invitationValid: false,
+                invitationData: {},
+                password: '',
+                confirmPassword: '',
+                submitting: false,
+                accepted: false,
+
+                async verifyInvitation() {
+                    if (!this.token) {
+                        this.error = 'Invalid invitation link';
+                        this.loading = false;
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/invitations/verify/${this.token}`);
+                        const data = await response.json();
+
+                        if (response.ok && data.valid) {
+                            this.invitationValid = true;
+                            this.invitationData = data;
+                        } else {
+                            this.error = data.error || 'Invalid or expired invitation';
+                        }
+                    } catch (error) {
+                        console.error('Error verifying invitation:', error);
+                        this.error = 'Error verifying invitation';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async acceptInvitation() {
+                    if (this.password !== this.confirmPassword) {
+                        alert('Passwords do not match');
+                        return;
+                    }
+
+                    if (this.password.length < 8) {
+                        alert('Password must be at least 8 characters long');
+                        return;
+                    }
+
+                    this.submitting = true;
+
+                    try {
+                        const response = await fetch('/api/invitations/accept', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                token: this.token,
+                                password: this.password
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.accepted = true;
+                            // Redirect to login after 2 seconds
+                            setTimeout(() => {
+                                window.location.href = '/login';
+                            }, 2000);
+                        } else {
+                            alert(data.error || 'Error accepting invitation');
+                        }
+                    } catch (error) {
+                        console.error('Error accepting invitation:', error);
+                        alert('Error accepting invitation');
+                    } finally {
+                        this.submitting = false;
+                    }
+                }
+            };
+        }
+    </script>
+</body>
+</html>

@@ -37,8 +37,12 @@ class Config:
     # Supabase
     SUPABASE_URL = os.getenv('SUPABASE_URL', '')
     SUPABASE_KEY = os.getenv('SUPABASE_KEY', '')
+    SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY', '')  # Service role key for admin operations
     SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET', '')
     
+    # Frontend
+    FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5000')
+
     # SMTP
     MAIL_SERVER = os.getenv('SMTP_HOST', 'smtp.gmail.com')
     MAIL_PORT = int(os.getenv('SMTP_PORT', '587'))

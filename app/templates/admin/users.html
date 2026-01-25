@@ -28,10 +28,14 @@
             <div class="card-body">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="card-title">Admin Users</h2>
-                    <button class="btn btn-primary btn-sm">Add User</button>
+                    <button class="btn btn-primary btn-sm" @click="openAddUserModal()">Add User</button>
+                </div>
+
+                <div x-show="users.length === 0" class="text-center py-8 text-base-content/50">
+                    <p>No admin users found</p>
                 </div>
                 
-                <div class="overflow-x-auto">
+                <div x-show="users.length > 0" class="overflow-x-auto">
                     <table class="table table-zebra">
                         <thead>
                             <tr>
@@ -56,7 +60,7 @@
                                     </td>
                                     <td x-text="formatDate(user.created_at)"></td>
                                     <td>
-                                        <button class="btn btn-xs btn-ghost">Edit Role</button>
+                                        <button class="btn btn-xs btn-ghost" @click="openEditRoleModal(user)">Edit Role</button>
                                     </td>
                                 </tr>
                             </template>
@@ -66,29 +70,217 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Add User / Invite Modal (Super Admin Only) -->
+    <div x-show="showAddUserModal" class="modal" :class="{ 'modal-open': showAddUserModal }">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-lg mb-4">Invite Admin User</h3>
+
+            <form @submit.prevent="sendInvitation()">
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">Email Address</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <input
+                        type="email"
+                        class="input input-bordered"
+                        x-model="invitationForm.email"
+                        placeholder="user@example.com"
+                        required
+                    >
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">Full Name</span>
+                    </label>
+                    <input
+                        type="text"
+                        class="input input-bordered"
+                        x-model="invitationForm.name"
+                        placeholder="John Doe"
+                    >
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">Assign Role</span>
+                    </label>
+                    <select class="select select-bordered w-full" x-model="invitationForm.role_id">
+                        <option value="">No Role (Can be assigned later)</option>
+                        <template x-for="role in roles" :key="role.id">
+                            <option :value="role.id" x-text="role.name"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div class="alert alert-info mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="text-xs">
+                        <p class="font-semibold mb-1">How it works:</p>
+                        <ol class="list-decimal list-inside space-y-1">
+                            <li>User account created in Supabase Auth</li>
+                            <li>Unique invitation link generated</li>
+                            <li>Copy link and send to new admin</li>
+                            <li>Admin sets password via link</li>
+                            <li>Email automatically verified</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <button type="button" class="btn" @click="closeAddUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        Send Invitation
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-backdrop" @click="closeAddUserModal()"></div>
+    </div>
+
+    <!-- Invitation Success Modal -->
+    <div x-show="showInvitationLinkModal" class="modal" :class="{ 'modal-open': showInvitationLinkModal }">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-lg mb-4 text-success">✓ Invitation Created Successfully!</h3>
+
+            <template x-if="invitationLink">
+                <div>
+                    <div class="alert alert-success mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>User created in Supabase. Send this link to <strong x-text="invitationEmail"></strong></span>
+                    </div>
+
+                    <div class="form-control mb-4">
+                        <label class="label">
+                            <span class="label-text font-semibold">Invitation Link</span>
+                            <span class="label-text-alt text-warning">Expires in 7 days</span>
+                        </label>
+                        <div class="join w-full">
+                            <input
+                                type="text"
+                                class="input input-bordered join-item flex-1 font-mono text-xs"
+                                :value="invitationLink"
+                                readonly
+                                id="invitationLinkInput"
+                            >
+                            <button
+                                type="button"
+                                class="btn btn-primary join-item"
+                                @click="copyInvitationLink()"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                                </svg>
+                                Copy Link
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <div class="text-xs">
+                            <p class="font-semibold">Important:</p>
+                            <ul class="list-disc list-inside mt-1">
+                                <li>Copy and securely share this link</li>
+                                <li>Link expires in 7 days</li>
+                                <li>User will set their own password</li>
+                                <li>Email will be automatically verified</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <div class="modal-action">
+                <button class="btn btn-primary" @click="closeInvitationLinkModal()">Done</button>
+            </div>
+        </div>
+        <div class="modal-backdrop" @click="closeInvitationLinkModal()"></div>
+    </div>
+
+    <!-- Edit User Role Modal -->
+    <div x-show="showEditUserModal" class="modal" :class="{ 'modal-open': showEditUserModal }">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">Edit User Role</h3>
+
+            <template x-if="editingUser">
+                <div>
+                    <div class="mb-4">
+                        <p><strong>User:</strong> <span x-text="editingUser.name"></span></p>
+                        <p class="text-sm text-base-content/60" x-text="editingUser.email"></p>
+                    </div>
+
+                    <form @submit.prevent="saveUserRole()">
+                        <div class="form-control mb-4">
+                            <label class="label">
+                                <span class="label-text">Assign Role</span>
+                            </label>
+                            <select class="select select-bordered w-full" x-model="userRoleForm.role_id" required>
+                                <option value="">Select a role</option>
+                                <template x-for="role in roles" :key="role.id">
+                                    <option :value="role.id" x-text="role.name"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <div class="form-control mb-4">
+                            <label class="label cursor-pointer">
+                                <span class="label-text">Super Admin</span>
+                                <input type="checkbox" class="checkbox" x-model="userRoleForm.is_super_admin">
+                            </label>
+                            <label class="label">
+                                <span class="label-text-alt text-warning">⚠️ Super Admin has full system access</span>
+                            </label>
+                        </div>
+
+                        <div class="modal-action">
+                            <button type="button" class="btn" @click="closeEditUserModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </template>
+        </div>
+        <div class="modal-backdrop" @click="closeEditUserModal()"></div>
+    </div>
+
     <!-- Roles Tab -->
     <div x-show="activeTab === 'roles' && !loading">
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="card-title">Roles</h2>
-                    <button class="btn btn-primary btn-sm" @click="showCreateRoleModal = true">Create Role</button>
+                    <button class="btn btn-primary btn-sm" @click="openCreateRoleModal()">Create Role</button>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="role in roles" :key="role.id">
                         <div class="card bg-base-200">
                             <div class="card-body">
-                                <h3 class="card-title text-base" x-text="role.name"></h3>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="card-title text-base" x-text="role.name"></h3>
+                                    <template x-if="role.name === 'Super Admin'">
+                                        <span class="badge badge-warning badge-sm">Protected</span>
+                                    </template>
+                                </div>
                                 <p class="text-sm text-base-content/60" x-text="role.description"></p>
                                 <div class="text-xs mt-2">
-                                    <span class="font-semibold">Permissions:</span>
-                                    <span x-text="role.permissions?.length || 0"></span>
+                                    <div><span class="font-semibold">Permissions:</span> <span x-text="role.permission_count || 0"></span></div>
+                                    <div><span class="font-semibold">Users:</span> <span x-text="role.user_count || 0"></span></div>
                                 </div>
                                 <div class="card-actions justify-end mt-4">
                                     <button class="btn btn-xs btn-ghost" @click="viewRolePermissions(role)">View Permissions</button>
-                                    <button class="btn btn-xs btn-outline">Edit</button>
+                                    <button class="btn btn-xs btn-outline" @click="openEditRoleModal(role)">Edit</button>
+                                    <template x-if="role.name !== 'Super Admin'">
+                                        <button class="btn btn-xs btn-error btn-outline" @click="confirmDeleteRole(role)">Delete</button>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -97,7 +289,91 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Create/Edit Role Modal -->
+    <div x-show="showRoleModal" class="modal" :class="{ 'modal-open': showRoleModal }">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-lg mb-4" x-text="editingRole ? 'Edit Role' : 'Create New Role'"></h3>
+
+            <form @submit.prevent="saveRole()">
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">Role Name</span>
+                    </label>
+                    <input
+                        type="text"
+                        class="input input-bordered"
+                        x-model="roleForm.name"
+                        :disabled="editingRole && editingRole.name === 'Super Admin'"
+                        required
+                    >
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">Description</span>
+                    </label>
+                    <textarea
+                        class="textarea textarea-bordered"
+                        x-model="roleForm.description"
+                        rows="2"
+                    ></textarea>
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">Permissions</span>
+                    </label>
+                    <div class="border rounded p-4 max-h-96 overflow-y-auto">
+                        <template x-for="(perms, group) in allPermissions" :key="group">
+                            <div class="mb-4">
+                                <h4 class="font-semibold text-sm mb-2 capitalize" x-text="group"></h4>
+                                <template x-for="perm in perms" :key="perm.id">
+                                    <label class="label cursor-pointer justify-start gap-2">
+                                        <input
+                                            type="checkbox"
+                                            class="checkbox checkbox-sm"
+                                            :value="perm.id"
+                                            x-model="roleForm.permission_ids"
+                                        >
+                                        <div class="flex-1">
+                                            <span class="label-text font-mono text-xs" x-text="perm.key"></span>
+                                            <span class="label-text-alt block" x-text="perm.description"></span>
+                                        </div>
+                                    </label>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <button type="button" class="btn" @click="closeRoleModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" x-text="editingRole ? 'Update' : 'Create'"></button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-backdrop" @click="closeRoleModal()"></div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="showDeleteModal" class="modal" :class="{ 'modal-open': showDeleteModal }">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">Confirm Delete</h3>
+            <p class="mb-4">Are you sure you want to delete the role "<span x-text="roleToDelete?.name"></span>"?</p>
+            <template x-if="roleToDelete?.user_count > 0">
+                <div class="alert alert-warning mb-4">
+                    <span>This role is assigned to <span x-text="roleToDelete.user_count"></span> user(s). Reassign them before deleting.</span>
+                </div>
+            </template>
+            <div class="modal-action">
+                <button class="btn" @click="showDeleteModal = false">Cancel</button>
+                <button class="btn btn-error" @click="deleteRole()" :disabled="roleToDelete?.user_count > 0">Delete</button>
+            </div>
+        </div>
+        <div class="modal-backdrop" @click="showDeleteModal = false"></div>
+    </div>
+
     <!-- Permissions Tab -->
     <div x-show="activeTab === 'permissions' && !loading">
         <div class="card bg-base-100 shadow-xl">
@@ -144,22 +420,52 @@ function usersManager() {
         users: [],
         roles: [],
         permissions: {},
+        allPermissions: {},
         loading: false,
-        showCreateRoleModal: false,
-        
+        showRoleModal: false,
+        showDeleteModal: false,
+        showAddUserModal: false,
+        showEditUserModal: false,
+        showInvitationLinkModal: false,
+        editingRole: null,
+        editingUser: null,
+        roleToDelete: null,
+        invitationForm: {
+            email: '',
+            name: '',
+            role_id: ''
+        },
+        invitationLink: '',
+        invitationEmail: '',
+        roleForm: {
+            name: '',
+            description: '',
+            permission_ids: []
+        },
+        userRoleForm: {
+            role_id: '',
+            is_super_admin: false
+        },
+
         async fetchData() {
             this.loading = true;
             try {
                 // Load users
                 const usersRes = await authFetch('/api/admin/users');
                 if (usersRes.ok) {
-                    this.users = await usersRes.json();
+                    const usersData = await usersRes.json();
+                    this.users = usersData.map(user => ({
+                        ...user,
+                        role: user.role_name ? { name: user.role_name } : null
+                    }));
+                    console.log('Users loaded:', this.users);
                 }
                 
                 // Load roles
                 const rolesRes = await authFetch('/api/admin/roles');
                 if (rolesRes.ok) {
                     this.roles = await rolesRes.json();
+                    console.log('Roles loaded:', this.roles);
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -169,6 +475,116 @@ function usersManager() {
             }
         },
         
+        // User Management Functions
+        openAddUserModal() {
+            this.invitationForm = {
+                email: '',
+                name: '',
+                role_id: ''
+            };
+            this.showAddUserModal = true;
+        },
+
+        closeAddUserModal() {
+            this.showAddUserModal = false;
+            this.invitationForm = {
+                email: '',
+                name: '',
+                role_id: ''
+            };
+        },
+
+        async sendInvitation() {
+            try {
+                const response = await authFetch('/api/invitations/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.invitationForm)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.invitationLink = data.invitation.invitation_link;
+                    this.invitationEmail = data.invitation.email;
+                    this.showAddUserModal = false;
+                    this.showInvitationLinkModal = true;
+                    showAlert('Invitation created successfully!', 'success');
+                    await this.fetchData();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error creating invitation', 'error');
+                }
+            } catch (error) {
+                console.error('Error sending invitation:', error);
+                showAlert('Error sending invitation', 'error');
+            }
+        },
+
+        closeInvitationLinkModal() {
+            this.showInvitationLinkModal = false;
+            this.invitationLink = '';
+            this.invitationEmail = '';
+        },
+
+        copyInvitationLink() {
+            const input = document.getElementById('invitationLinkInput');
+            if (input) {
+                input.select();
+                document.execCommand('copy');
+                showAlert('Invitation link copied to clipboard!', 'success');
+            }
+        },
+
+        openEditRoleModal(user) {
+            console.log('Opening edit role modal for user:', user);
+            this.editingUser = user;
+            this.userRoleForm = {
+                role_id: user.role_id || '',
+                is_super_admin: user.is_super_admin || false
+            };
+            this.showEditUserModal = true;
+        },
+
+        closeEditUserModal() {
+            this.showEditUserModal = false;
+            this.editingUser = null;
+            this.userRoleForm = {
+                role_id: '',
+                is_super_admin: false
+            };
+        },
+
+        async saveUserRole() {
+            if (!this.editingUser) return;
+
+            try {
+                console.log('Saving user role:', this.userRoleForm);
+
+                const response = await authFetch(`/api/admin/users/${this.editingUser.id}/assign-role`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.userRoleForm)
+                });
+
+                if (response.ok) {
+                    showAlert('User role updated successfully', 'success');
+                    this.closeEditUserModal();
+                    await this.fetchData();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error updating user role', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving user role:', error);
+                showAlert('Error updating user role', 'error');
+            }
+        },
+
+        // Role Management Functions
         async loadPermissions() {
             if (Object.keys(this.permissions).length > 0) return;
             
@@ -183,13 +599,135 @@ function usersManager() {
             }
         },
         
+        async loadAllPermissions() {
+            if (Object.keys(this.allPermissions).length > 0) return;
+
+            try {
+                const response = await authFetch('/api/admin/permissions');
+                if (response.ok) {
+                    this.allPermissions = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading permissions:', error);
+                showAlert('Error loading permissions', 'error');
+            }
+        },
+
+        async openCreateRoleModal() {
+            await this.loadAllPermissions();
+            this.editingRole = null;
+            this.roleForm = {
+                name: '',
+                description: '',
+                permission_ids: []
+            };
+            this.showRoleModal = true;
+        },
+
+        async openEditRoleModal(role) {
+            await this.loadAllPermissions();
+            this.editingRole = role;
+
+            // Get full role details with permissions
+            try {
+                const response = await authFetch(`/api/admin/roles/${role.id}`);
+                if (response.ok) {
+                    const roleData = await response.json();
+                    this.roleForm = {
+                        name: roleData.name,
+                        description: roleData.description || '',
+                        permission_ids: roleData.permissions.map(p => p.id)
+                    };
+                    this.showRoleModal = true;
+                }
+            } catch (error) {
+                console.error('Error loading role:', error);
+                showAlert('Error loading role details', 'error');
+            }
+        },
+
+        closeRoleModal() {
+            this.showRoleModal = false;
+            this.editingRole = null;
+            this.roleForm = {
+                name: '',
+                description: '',
+                permission_ids: []
+            };
+        },
+
+        async saveRole() {
+            try {
+                const url = this.editingRole
+                    ? `/api/admin/roles/${this.editingRole.id}`
+                    : '/api/admin/roles';
+
+                const method = this.editingRole ? 'PUT' : 'POST';
+
+                const response = await authFetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.roleForm)
+                });
+
+                if (response.ok) {
+                    showAlert(
+                        this.editingRole ? 'Role updated successfully' : 'Role created successfully',
+                        'success'
+                    );
+                    this.closeRoleModal();
+                    await this.fetchData();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error saving role', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving role:', error);
+                showAlert('Error saving role', 'error');
+            }
+        },
+
+        confirmDeleteRole(role) {
+            this.roleToDelete = role;
+            this.showDeleteModal = true;
+        },
+
+        async deleteRole() {
+            if (!this.roleToDelete) return;
+
+            try {
+                const response = await authFetch(`/api/admin/roles/${this.roleToDelete.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('Role deleted successfully', 'success');
+                    this.showDeleteModal = false;
+                    this.roleToDelete = null;
+                    await this.fetchData();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error deleting role', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting role:', error);
+                showAlert('Error deleting role', 'error');
+            }
+        },
+
         formatDate(dateString) {
+            if (!dateString) return 'N/A';
             return new Date(dateString).toLocaleDateString('en-US');
         },
         
         viewRolePermissions(role) {
-            // Show modal with role permissions
-            alert(`Permissions for ${role.name}:\n${role.permissions?.map(p => p.key).join('\n') || 'No permissions'}`);
+            const permissionsList = role.permissions && role.permissions.length > 0
+                ? role.permissions.map(p => `• ${p.key}: ${p.description}`).join('\n')
+                : 'No permissions assigned';
+
+            alert(`Permissions for ${role.name}:\n\n${permissionsList}`);
         }
     };
 }

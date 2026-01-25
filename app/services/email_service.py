@@ -6,22 +6,84 @@ from flask_mail import Message
 from app.app import mail
 from app.models import db
 from app.models.events import EmailLog
+from app.models.auth import SMTPConfig
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
-def send_email(recipient, subject, body, html=None):
-    """Send a single email"""
+def get_smtp_config():
+    """Get SMTP configuration from database, fallback to .env"""
+    # Try to get from database first (supersedes .env)
+    db_config = SMTPConfig.query.filter_by(is_active=True).first()
+
+    if db_config:
+        return {
+            'server': db_config.smtp_server,
+            'port': db_config.smtp_port,
+            'username': db_config.smtp_username,
+            'password': db_config.smtp_password,
+            'use_tls': db_config.smtp_use_tls,
+            'use_ssl': db_config.smtp_use_ssl,
+            'sender_email': db_config.sender_email,
+            'sender_name': db_config.sender_name,
+            'from_db': True
+        }
+
+    # Fallback to .env configuration
+    return {
+        'server': current_app.config.get('MAIL_SERVER'),
+        'port': current_app.config.get('MAIL_PORT', 587),
+        'username': current_app.config.get('MAIL_USERNAME'),
+        'password': current_app.config.get('MAIL_PASSWORD'),
+        'use_tls': current_app.config.get('MAIL_USE_TLS', True),
+        'use_ssl': current_app.config.get('MAIL_USE_SSL', False),
+        'sender_email': current_app.config.get('MAIL_DEFAULT_SENDER'),
+        'sender_name': current_app.config.get('MAIL_SENDER_NAME', 'GateKeeper'),
+        'from_db': False
+    }
+
+
+def send_email_smtp(recipient, subject, body, html=None):
+    """Send email using SMTP directly (supports both DB and .env config)"""
+    config = get_smtp_config()
+
     try:
-        msg = Message(
-            subject=subject,
-            recipients=[recipient],
-            body=body,
-            html=html
-        )
-        mail.send(msg)
+        message = MIMEMultipart('alternative')
+        message['Subject'] = subject
+        message['From'] = f"{config['sender_name']} <{config['sender_email']}>"
+        message['To'] = recipient
+
+        # Attach parts
+        if body:
+            part1 = MIMEText(body, 'plain')
+            message.attach(part1)
+
+        if html:
+            part2 = MIMEText(html, 'html')
+            message.attach(part2)
+
+        # Connect and send
+        if config['use_ssl']:
+            server = smtplib.SMTP_SSL(config['server'], config['port'])
+        else:
+            server = smtplib.SMTP(config['server'], config['port'])
+            if config['use_tls']:
+                server.starttls()
+
+        server.login(config['username'], config['password'])
+        server.sendmail(config['sender_email'], recipient, message.as_string())
+        server.quit()
+
         return True, None
     except Exception as e:
         return False, str(e)
+
+
+def send_email(recipient, subject, body, html=None):
+    """Send a single email (uses DB config if available, otherwise .env)"""
+    return send_email_smtp(recipient, subject, body, html)
 
 
 def send_bulk_emails(event_id, subject, template_name, recipients):

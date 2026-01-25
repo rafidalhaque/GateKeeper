@@ -47,41 +47,147 @@
         </div>
     </div>
     
-    <!-- Email Settings -->
-    <div class="card bg-base-100 shadow-xl mb-6">
+    <!-- SMTP Configuration (Super Admin Only) -->
+    <div class="card bg-base-100 shadow-xl mb-6" x-show="isSuperAdmin">
         <div class="card-body">
-            <h2 class="card-title mb-4">Email Settings</h2>
-            
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="card-title">SMTP Configuration</h2>
+                <span class="badge badge-warning">Super Admin Only</span>
+            </div>
+
             <div class="alert alert-info mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <span>Email settings are configured via environment variables</span>
+                <div>
+                    <p class="font-semibold">Database configuration supersedes .env</p>
+                    <p class="text-xs">SMTP settings saved here will override environment variables</p>
+                </div>
             </div>
             
-            <div class="form-control mb-4">
-                <label class="label">
-                    <span class="label-text">SMTP Server</span>
-                </label>
-                <input type="text" class="input input-bordered" x-model="settings.smtp_host" readonly>
-            </div>
-            
-            <div class="form-control mb-4">
-                <label class="label">
-                    <span class="label-text">From Email</span>
-                </label>
-                <input type="email" class="input input-bordered" x-model="settings.from_email" readonly>
-            </div>
-            
-            <button class="btn btn-outline" @click="testEmail()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                </svg>
-                Test Email Configuration
-            </button>
+            <form @submit.prevent="saveSMTPConfig()">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">SMTP Server</span>
+                            <span class="label-text-alt text-error">*</span>
+                        </label>
+                        <input type="text" class="input input-bordered" x-model="smtpConfig.smtp_server" placeholder="smtp.gmail.com" required>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">SMTP Port</span>
+                            <span class="label-text-alt text-error">*</span>
+                        </label>
+                        <input type="number" class="input input-bordered" x-model="smtpConfig.smtp_port" placeholder="587" required>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Username</span>
+                            <span class="label-text-alt text-error">*</span>
+                        </label>
+                        <input type="text" class="input input-bordered" x-model="smtpConfig.smtp_username" placeholder="your-email@gmail.com" required>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Password</span>
+                            <span class="label-text-alt text-error">*</span>
+                        </label>
+                        <input type="password" class="input input-bordered" x-model="smtpConfig.smtp_password" placeholder="Your password or app password" required>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Sender Email</span>
+                            <span class="label-text-alt text-error">*</span>
+                        </label>
+                        <input type="email" class="input input-bordered" x-model="smtpConfig.sender_email" placeholder="noreply@yourdomain.com" required>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Sender Name</span>
+                        </label>
+                        <input type="text" class="input input-bordered" x-model="smtpConfig.sender_name" placeholder="GateKeeper">
+                    </div>
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" class="checkbox" x-model="smtpConfig.smtp_use_tls">
+                        <div>
+                            <span class="label-text font-semibold">Use TLS</span>
+                            <p class="text-xs text-base-content/60">Recommended for port 587</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-control mb-6">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" class="checkbox" x-model="smtpConfig.smtp_use_ssl">
+                        <div>
+                            <span class="label-text font-semibold">Use SSL</span>
+                            <p class="text-xs text-base-content/60">For port 465</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Save Configuration
+                    </button>
+
+                    <button type="button" class="btn btn-outline" @click="testSMTPConfig()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        Test Configuration
+                    </button>
+
+                    <template x-if="smtpConfig.id">
+                        <button type="button" class="btn btn-error btn-outline" @click="deleteSMTPConfig()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                            Reset to .env Defaults
+                        </button>
+                    </template>
+                </div>
+            </form>
+
+            <template x-if="smtpConfigExists">
+                <div class="alert alert-success mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>Custom SMTP configuration is active (overriding .env)</span>
+                </div>
+            </template>
         </div>
     </div>
-    
+
+    <!--Test SMTP Modal -->
+    <div x-show="showTestModal" class="modal" :class="{ 'modal-open': showTestModal }">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">Test SMTP Configuration</h3>
+            <div class="form-control mb-4">
+                <label class="label">
+                    <span class="label-text">Send test email to:</span>
+                </label>
+                <input type="email" class="input input-bordered" x-model="testEmail" placeholder="your-email@example.com" required>
+            </div>
+            <div class="modal-action">
+                <button class="btn" @click="showTestModal = false">Cancel</button>
+                <button class="btn btn-primary" @click="sendTestEmail()">Send Test Email</button>
+            </div>
+        </div>
+        <div class="modal-backdrop" @click="showTestModal = false"></div>
+    </div>
+
     <!-- Database Information -->
     <div class="card bg-base-100 shadow-xl mb-6">
         <div class="card-body">
@@ -248,9 +354,36 @@ window.settingsManager = function() {
             from_email: 'noreply@gatekeeper.com'
         },
         dbStats: {},
-        
+        isSuperAdmin: false,
+        smtpConfig: {
+            id: null,
+            smtp_server: '',
+            smtp_port: 587,
+            smtp_username: '',
+            smtp_password: '',
+            smtp_use_tls: true,
+            smtp_use_ssl: false,
+            sender_email: '',
+            sender_name: 'GateKeeper'
+        },
+        smtpConfigExists: false,
+        showTestModal: false,
+        testEmail: '',
+
         async loadSettings() {
             try {
+                // Check if user is super admin
+                const meRes = await authFetch('/auth/me');
+                if (meRes.ok) {
+                    const userData = await meRes.json();
+                    this.isSuperAdmin = userData.is_super_admin || false;
+                }
+
+                // Load SMTP config if super admin
+                if (this.isSuperAdmin) {
+                    await this.loadSMTPConfig();
+                }
+
                 // Load database stats
                 const eventsRes = await authFetch('/api/events');
                 const participantsRes = await authFetch('/api/participants');
@@ -275,6 +408,113 @@ window.settingsManager = function() {
             }
         },
         
+        async loadSMTPConfig() {
+            try {
+                const response = await authFetch('/api/smtp/config');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.exists) {
+                        this.smtpConfigExists = true;
+                        this.smtpConfig = {
+                            ...data.config,
+                            smtp_password: '' // Don't populate password field
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading SMTP config:', error);
+            }
+        },
+
+        async saveSMTPConfig() {
+            try {
+                const response = await authFetch('/api/smtp/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.smtpConfig)
+                });
+
+                if (response.ok) {
+                    showAlert('SMTP configuration saved successfully', 'success');
+                    await this.loadSMTPConfig();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error saving SMTP configuration', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving SMTP config:', error);
+                showAlert('Error saving SMTP configuration', 'error');
+            }
+        },
+
+        testSMTPConfig() {
+            this.showTestModal = true;
+        },
+
+        async sendTestEmail() {
+            if (!this.testEmail) {
+                showAlert('Please enter an email address', 'error');
+                return;
+            }
+
+            try {
+                const response = await authFetch('/api/smtp/config/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        test_email: this.testEmail,
+                        ...this.smtpConfig
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    this.showTestModal = false;
+                    this.testEmail = '';
+                } else {
+                    showAlert(result.error || 'Error sending test email', 'error');
+                }
+            } catch (error) {
+                console.error('Error testing SMTP:', error);
+                showAlert('Error sending test email', 'error');
+            }
+        },
+
+        async deleteSMTPConfig() {
+            if (!confirm('Are you sure you want to delete the custom SMTP configuration and revert to .env defaults?')) {
+                return;
+            }
+
+            try {
+                const response = await authFetch(`/api/smtp/config/${this.smtpConfig.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('SMTP configuration deleted. Using .env defaults.', 'success');
+                    this.smtpConfigExists = false;
+                    this.smtpConfig = {
+                        id: null,
+                        smtp_server: '',
+                        smtp_port: 587,
+                        smtp_username: '',
+                        smtp_password: '',
+                        smtp_use_tls: true,
+                        smtp_use_ssl: false,
+                        sender_email: '',
+                        sender_name: 'GateKeeper'
+                    };
+                } else {
+                    showAlert('Error deleting SMTP configuration', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting SMTP config:', error);
+                showAlert('Error deleting SMTP configuration', 'error');
+            }
+        },
+
         async testEmail() {
             try {
                 const response = await authFetch('/api/email/test', {

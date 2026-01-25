@@ -93,6 +93,52 @@ class AdminUser(db.Model):
         return any(p.key in permission_keys for p in self.role.permissions)
 
 
+class SMTPConfig(db.Model):
+    """SMTP Configuration - stored in database, supersedes .env"""
+    __tablename__ = 'smtp_config'
+
+    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    smtp_server = db.Column(String(255), nullable=False)
+    smtp_port = db.Column(Integer, nullable=False, default=587)
+    smtp_username = db.Column(String(255), nullable=False)
+    smtp_password = db.Column(String(255), nullable=False)  # Should be encrypted in production
+    smtp_use_tls = db.Column(Boolean, default=True)
+    smtp_use_ssl = db.Column(Boolean, default=False)
+    sender_email = db.Column(String(255), nullable=False)
+    sender_name = db.Column(String(255), default='GateKeeper')
+    is_active = db.Column(Boolean, default=True)
+    created_at = db.Column(DateTime, default=datetime.utcnow)
+    updated_at = db.Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = db.Column(UUID(as_uuid=True), ForeignKey('admin_users.id'))
+
+    def __repr__(self):
+        return f'<SMTPConfig {self.smtp_server}:{self.smtp_port}>'
+
+
+class PendingInvitation(db.Model):
+    """Pending admin user invitations"""
+    __tablename__ = 'pending_invitations'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = db.Column(String(255), unique=True, nullable=False)
+    name = db.Column(String(255))
+    role_id = db.Column(Integer, ForeignKey('roles.id'))
+    invited_by = db.Column(UUID(as_uuid=True), ForeignKey('admin_users.id'))
+    invitation_token = db.Column(String(255), unique=True, nullable=False)
+    supabase_user_id = db.Column(String(255), unique=True, nullable=True)  # Set when user is created in Supabase
+    expires_at = db.Column(DateTime, nullable=False)
+    accepted_at = db.Column(DateTime, nullable=True)
+    status = db.Column(String(50), default='pending')  # pending, accepted, expired
+    created_at = db.Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    role = relationship('Role')
+    inviter = relationship('AdminUser', foreign_keys=[invited_by])
+
+    def __repr__(self):
+        return f'<PendingInvitation {self.email}>'
+
+
 # Import CheckinLog after all classes are defined to avoid circular import issues
 # This ensures SQLAlchemy can resolve the 'CheckinLog' relationship in AdminUser
 from app.models.events import CheckinLog  # noqa: F401, E402
