@@ -514,24 +514,6 @@ window.settingsManager = function() {
                 showAlert('Error deleting SMTP configuration', 'error');
             }
         },
-
-        async testEmail() {
-            try {
-                const response = await authFetch('/api/email/test', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                
-                if (response.ok) {
-                    showAlert('Test email sent successfully', 'success');
-                } else {
-                    showAlert('Error sending test email', 'error');
-                }
-            } catch (error) {
-                console.error('Error testing email:', error);
-                showAlert('Error testing email', 'error');
-            }
-        }
     };
 }
 </script>
