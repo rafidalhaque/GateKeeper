@@ -19,6 +19,9 @@ def register_commands(app):
         click.echo('Seeding permissions...')
         
         permissions_data = [
+            # Dashboard
+            ('dashboard.view', 'View dashboard statistics', 'dashboard'),
+
             # Participants
             ('participant.read', 'Read participant data', 'participants'),
             ('participant.create', 'Create participants', 'participants'),
@@ -114,6 +117,7 @@ def register_commands(app):
             
             # Assign permissions
             event_admin_permissions = [
+                'dashboard.view',
                 'participant.read', 'participant.create', 'participant.update', 'participant.delete',
                 'team.read', 'team.create', 'team.update', 'team.delete',
                 'attendance.read', 'attendance.mark',
