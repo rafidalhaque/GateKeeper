@@ -7,6 +7,7 @@
     
     <!-- TailwindCSS + DaisyUI -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <!-- Note: Tailwind CDN warning is expected in development. For production, use a built version via PostCSS or Tailwind CLI -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Alpine.js -->
@@ -202,10 +203,38 @@ function attachLogoutHandlers() {
                 detail: { message, type }
             }));
         }
+
+        // Enhanced authFetch function for API calls
+        async function authFetch(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            };
+
+            const finalOptions = { ...defaultOptions, ...options };
+
+            try {
+                const response = await fetch(url, finalOptions);
+                return response;
+            } catch (error) {
+                console.error('authFetch error:', error);
+                throw error;
+            }
+        }
         
-        // Make functions globally accessible
+        // Make functions globally accessible IMMEDIATELY (before Alpine.js initializes)
         window.handleLogout = handleLogout;
         window.showAlert = showAlert;
+        window.authFetch = authFetch;
+
+        // Log function availability for debugging
+        console.log('Global functions initialized:', {
+            handleLogout: typeof window.handleLogout,
+            showAlert: typeof window.showAlert,
+            authFetch: typeof window.authFetch
+        });
 
         {% block extra_js %}{% endblock %}
     </script>
