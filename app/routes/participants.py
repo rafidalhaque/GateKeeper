@@ -75,9 +75,15 @@ def list_participants():
         'email': p.email,
         'event_id': str(p.event_id),
         'team_id': p.team_id,
+        'team': {
+            'id': p.team.id,
+            'team_name': p.team.team_name,
+            'uuid': str(p.team.uuid)
+        } if p.team else None,
         'attendance_status': p.attendance_status,
         'attended_at': p.attended_at.isoformat() if p.attended_at else None,
-        'unique_url_uuid': str(p.unique_url_uuid)
+        'unique_url_uuid': str(p.unique_url_uuid),
+        't_shirt_size': p.t_shirt_size
     } for p in participants])
 
 

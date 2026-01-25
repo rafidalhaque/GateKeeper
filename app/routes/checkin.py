@@ -125,6 +125,7 @@ def get_checkin_logs():
         'id': log.id,
         'participant_id': str(log.participant_id),
         'participant_name': log.participant.name if log.participant else None,
+        'team_name': log.participant.team.team_name if log.participant and log.participant.team else None,
         'checked_in_by': str(log.checked_in_by) if log.checked_in_by else 'Self check-in',
         'ip_address': log.ip_address,
         'checked_in_at': log.checked_in_at.isoformat()
