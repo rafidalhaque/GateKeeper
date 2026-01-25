@@ -71,6 +71,7 @@ def list_events():
         'date': event.date.isoformat(),
         'venue': event.venue,
         'mode': event.mode,
+        'participant_count': len(event.participants),
         'created_at': event.created_at.isoformat()
     } for event in events])
 

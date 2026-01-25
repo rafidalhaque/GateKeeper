@@ -1,0 +1,644 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Event Configuration - GateKeeper Admin{% endblock %}
+{% block page_title %}<span x-text="event?.name || 'Event Configuration'"></span>{% endblock %}
+
+{% block breadcrumb %}
+{% set breadcrumb_items = [{'name': 'Events', 'url': '/admin/events'}, {'name': 'Configuration'}] %}
+{% include 'admin/components/breadcrumb.html' %}
+{% endblock %}
+
+{% block content %}
+<div x-data="eventConfig('{{ event_id }}')" x-init="loadEvent()">
+    <!-- Loading State -->
+    <div x-show="loading" class="flex justify-center items-center py-12">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
+    <div x-show="!loading && event">
+        <!-- Event Info Header -->
+        <div class="alert alert-info mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div>
+                <h3 class="font-bold">Configuring: <span x-text="event?.name"></span></h3>
+                <div class="text-sm">Set up custom fields and schedule for this event</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs tabs-boxed mb-6">
+            <a class="tab" :class="{ 'tab-active': activeTab === 'custom_fields' }" @click="activeTab = 'custom_fields'">Custom Fields</a>
+            <a class="tab" :class="{ 'tab-active': activeTab === 'schedule' }" @click="activeTab = 'schedule'">Schedule & Prayer Times</a>
+            <a class="tab" :class="{ 'tab-active': activeTab === 'preview' }" @click="activeTab = 'preview'">Preview</a>
+        </div>
+
+        <!-- Custom Fields Tab -->
+        <div x-show="activeTab === 'custom_fields'" class="space-y-6">
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="card-title">Custom Fields Configuration</h2>
+                        <button class="btn btn-primary btn-sm" @click="addCustomField()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Add Field
+                        </button>
+                    </div>
+
+                    <div class="alert alert-warning mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <span>These fields will be collected during registration and displayed on tickets</span>
+                    </div>
+
+                    <!-- Custom Fields List -->
+                    <div class="space-y-4" x-show="customFields.length > 0">
+                        <template x-for="(field, index) in customFields" :key="index">
+                            <div class="card bg-base-200">
+                                <div class="card-body">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Field Name -->
+                                        <div class="form-control">
+                                            <label class="label">
+                                                <span class="label-text">Field Name</span>
+                                            </label>
+                                            <input type="text"
+                                                   x-model="field.name"
+                                                   placeholder="e.g., dietary_preference"
+                                                   class="input input-bordered">
+                                        </div>
+
+                                        <!-- Field Label -->
+                                        <div class="form-control">
+                                            <label class="label">
+                                                <span class="label-text">Display Label</span>
+                                            </label>
+                                            <input type="text"
+                                                   x-model="field.label"
+                                                   placeholder="e.g., Dietary Preference"
+                                                   class="input input-bordered">
+                                        </div>
+
+                                        <!-- Field Type -->
+                                        <div class="form-control">
+                                            <label class="label">
+                                                <span class="label-text">Field Type</span>
+                                            </label>
+                                            <select x-model="field.type" class="select select-bordered">
+                                                <option value="text">Text</option>
+                                                <option value="email">Email</option>
+                                                <option value="number">Number</option>
+                                                <option value="select">Dropdown</option>
+                                                <option value="checkbox">Checkbox</option>
+                                                <option value="textarea">Text Area</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Required -->
+                                        <div class="form-control">
+                                            <label class="label">
+                                                <span class="label-text">Required?</span>
+                                            </label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="checkbox"
+                                                       x-model="field.required"
+                                                       class="toggle toggle-primary">
+                                                <span x-text="field.required ? 'Yes' : 'No'"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Options (for select/checkbox) -->
+                                        <div class="form-control md:col-span-2" x-show="field.type === 'select' || field.type === 'checkbox'">
+                                            <label class="label">
+                                                <span class="label-text">Options (comma-separated)</span>
+                                            </label>
+                                            <input type="text"
+                                                   x-model="field.options"
+                                                   placeholder="e.g., Halal, Vegetarian, Vegan, No Preference"
+                                                   class="input input-bordered">
+                                        </div>
+
+                                        <!-- Placeholder -->
+                                        <div class="form-control md:col-span-2">
+                                            <label class="label">
+                                                <span class="label-text">Placeholder Text (optional)</span>
+                                            </label>
+                                            <input type="text"
+                                                   x-model="field.placeholder"
+                                                   placeholder="e.g., Select your dietary preference"
+                                                   class="input input-bordered">
+                                        </div>
+                                    </div>
+
+                                    <!-- Remove Button -->
+                                    <div class="card-actions justify-end mt-4">
+                                        <button class="btn btn-error btn-sm" @click="removeCustomField(index)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                            </svg>
+                                            Remove Field
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div x-show="customFields.length === 0" class="text-center py-8 text-base-content/50">
+                        <p>No custom fields configured. Click "Add Field" to create one.</p>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="card-actions justify-end mt-6">
+                        <button class="btn btn-success" @click="saveCustomFields()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Save Custom Fields
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Common Field Templates -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title">Quick Add Templates</h3>
+                    <p class="text-sm text-base-content/60">Click to add common field configurations</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mt-4">
+                        <button class="btn btn-outline btn-sm" @click="addTemplate('dietary')">
+                            🍽️ Dietary Preference
+                        </button>
+                        <button class="btn btn-outline btn-sm" @click="addTemplate('tshirt')">
+                            👕 T-Shirt Size
+                        </button>
+                        <button class="btn btn-outline btn-sm" @click="addTemplate('gender_section')">
+                            👥 Gender Section
+                        </button>
+                        <button class="btn btn-outline btn-sm" @click="addTemplate('emergency_contact')">
+                            📞 Emergency Contact
+                        </button>
+                        <button class="btn btn-outline btn-sm" @click="addTemplate('allergies')">
+                            ⚕️ Allergies
+                        </button>
+                        <button class="btn btn-outline btn-sm" @click="addTemplate('volunteer')">
+                            🙋 Volunteer Interest
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Configuration Tab -->
+        <div x-show="activeTab === 'schedule'" class="space-y-6">
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title">Prayer Times Configuration</h2>
+                    <p class="text-sm text-base-content/60">Configure prayer times for this event (optional)</p>
+
+                    <div class="form-control">
+                        <label class="label cursor-pointer">
+                            <span class="label-text">Enable Prayer Times</span>
+                            <input type="checkbox" x-model="prayerTimesEnabled" class="toggle toggle-primary">
+                        </label>
+                    </div>
+
+                    <div x-show="prayerTimesEnabled" class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Fajr</span>
+                            </label>
+                            <input type="time" x-model="scheduleConfig.prayer_times.fajr" class="input input-bordered">
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Dhuhr</span>
+                            </label>
+                            <input type="time" x-model="scheduleConfig.prayer_times.dhuhr" class="input input-bordered">
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Asr</span>
+                            </label>
+                            <input type="time" x-model="scheduleConfig.prayer_times.asr" class="input input-bordered">
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Maghrib</span>
+                            </label>
+                            <input type="time" x-model="scheduleConfig.prayer_times.maghrib" class="input input-bordered">
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Isha</span>
+                            </label>
+                            <input type="time" x-model="scheduleConfig.prayer_times.isha" class="input input-bordered">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Schedule/Program -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="card-title">Event Program/Schedule</h2>
+                        <button class="btn btn-primary btn-sm" @click="addScheduleItem()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Add Program Item
+                        </button>
+                    </div>
+
+                    <div class="space-y-3" x-show="scheduleConfig.program && scheduleConfig.program.length > 0">
+                        <template x-for="(item, index) in scheduleConfig.program" :key="index">
+                            <div class="flex gap-2 items-start">
+                                <div class="form-control flex-1">
+                                    <input type="time" x-model="item.time" class="input input-bordered input-sm" placeholder="Time">
+                                </div>
+                                <div class="form-control flex-[3]">
+                                    <input type="text" x-model="item.activity" class="input input-bordered input-sm" placeholder="Activity description">
+                                </div>
+                                <button class="btn btn-error btn-sm btn-square" @click="removeScheduleItem(index)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div x-show="!scheduleConfig.program || scheduleConfig.program.length === 0" class="text-center py-8 text-base-content/50">
+                        <p>No program items added. Click "Add Program Item" to create one.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Breaks Configuration -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="card-title">Breaks & Prayer Breaks</h2>
+                        <button class="btn btn-primary btn-sm" @click="addBreak()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Add Break
+                        </button>
+                    </div>
+
+                    <div class="space-y-3" x-show="scheduleConfig.breaks && scheduleConfig.breaks.length > 0">
+                        <template x-for="(breakItem, index) in scheduleConfig.breaks" :key="index">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                <div class="form-control">
+                                    <input type="text" x-model="breakItem.name" class="input input-bordered input-sm" placeholder="Break name">
+                                </div>
+                                <div class="form-control">
+                                    <input type="time" x-model="breakItem.start" class="input input-bordered input-sm" placeholder="Start time">
+                                </div>
+                                <div class="form-control">
+                                    <input type="number" x-model="breakItem.duration" class="input input-bordered input-sm" placeholder="Duration (mins)">
+                                </div>
+                                <button class="btn btn-error btn-sm" @click="removeBreak(index)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Remove
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div x-show="!scheduleConfig.breaks || scheduleConfig.breaks.length === 0" class="text-center py-8 text-base-content/50">
+                        <p>No breaks configured. Click "Add Break" to create one.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="card-actions justify-end">
+                        <button class="btn btn-success" @click="saveSchedule()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Save Schedule Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Tab -->
+        <div x-show="activeTab === 'preview'" class="space-y-6">
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title">Configuration Preview</h2>
+
+                    <!-- Custom Fields Preview -->
+                    <div class="mb-6">
+                        <h3 class="font-bold text-lg mb-2">Custom Fields</h3>
+                        <div x-show="customFields.length > 0" class="space-y-2">
+                            <template x-for="field in customFields" :key="field.name">
+                                <div class="flex gap-2 items-center">
+                                    <span class="badge badge-primary" x-text="field.label"></span>
+                                    <span class="text-sm" x-text="`Type: ${field.type}`"></span>
+                                    <span class="badge badge-sm" x-show="field.required">Required</span>
+                                    <span class="text-sm text-base-content/60" x-show="field.options" x-text="`Options: ${field.options}`"></span>
+                                </div>
+                            </template>
+                        </div>
+                        <div x-show="customFields.length === 0" class="text-base-content/50">
+                            No custom fields configured
+                        </div>
+                    </div>
+
+                    <!-- Prayer Times Preview -->
+                    <div class="mb-6" x-show="prayerTimesEnabled">
+                        <h3 class="font-bold text-lg mb-2">Prayer Times</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <div class="stat bg-base-200 rounded-lg">
+                                <div class="stat-title text-xs">Fajr</div>
+                                <div class="stat-value text-sm" x-text="scheduleConfig.prayer_times?.fajr || '-'"></div>
+                            </div>
+                            <div class="stat bg-base-200 rounded-lg">
+                                <div class="stat-title text-xs">Dhuhr</div>
+                                <div class="stat-value text-sm" x-text="scheduleConfig.prayer_times?.dhuhr || '-'"></div>
+                            </div>
+                            <div class="stat bg-base-200 rounded-lg">
+                                <div class="stat-title text-xs">Asr</div>
+                                <div class="stat-value text-sm" x-text="scheduleConfig.prayer_times?.asr || '-'"></div>
+                            </div>
+                            <div class="stat bg-base-200 rounded-lg">
+                                <div class="stat-title text-xs">Maghrib</div>
+                                <div class="stat-value text-sm" x-text="scheduleConfig.prayer_times?.maghrib || '-'"></div>
+                            </div>
+                            <div class="stat bg-base-200 rounded-lg">
+                                <div class="stat-title text-xs">Isha</div>
+                                <div class="stat-value text-sm" x-text="scheduleConfig.prayer_times?.isha || '-'"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Program Preview -->
+                    <div class="mb-6" x-show="scheduleConfig.program && scheduleConfig.program.length > 0">
+                        <h3 class="font-bold text-lg mb-2">Event Program</h3>
+                        <div class="timeline timeline-vertical">
+                            <template x-for="(item, index) in scheduleConfig.program" :key="index">
+                                <div class="timeline-item">
+                                    <div class="timeline-start" x-text="item.time"></div>
+                                    <div class="timeline-middle">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="timeline-end timeline-box" x-text="item.activity"></div>
+                                    <hr x-show="index < scheduleConfig.program.length - 1">
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- JSON Preview -->
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">Raw JSON Configuration</h3>
+                        <details class="collapse collapse-arrow bg-base-200">
+                            <summary class="collapse-title font-medium">View JSON</summary>
+                            <div class="collapse-content">
+                                <pre class="bg-base-300 p-4 rounded-lg overflow-x-auto text-xs" x-text="JSON.stringify({custom_fields: customFields, schedule_config: scheduleConfig}, null, 2)"></pre>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function eventConfig(eventId) {
+    return {
+        eventId,
+        event: null,
+        loading: true,
+        activeTab: 'custom_fields',
+        customFields: [],
+        scheduleConfig: {
+            prayer_times: {
+                fajr: '',
+                dhuhr: '',
+                asr: '',
+                maghrib: '',
+                isha: ''
+            },
+            program: [],
+            breaks: []
+        },
+        prayerTimesEnabled: false,
+
+        async loadEvent() {
+            this.loading = true;
+            try {
+                const response = await authFetch(`/api/events/${this.eventId}`);
+                if (response.ok) {
+                    this.event = await response.json();
+
+                    // Load custom fields
+                    if (this.event.custom_fields) {
+                        this.customFields = Array.isArray(this.event.custom_fields)
+                            ? this.event.custom_fields
+                            : this.event.custom_fields.fields || [];
+                    }
+
+                    // Load schedule config
+                    if (this.event.schedule_config) {
+                        this.scheduleConfig = {
+                            prayer_times: this.event.schedule_config.prayer_times || {
+                                fajr: '', dhuhr: '', asr: '', maghrib: '', isha: ''
+                            },
+                            program: this.event.schedule_config.program || [],
+                            breaks: this.event.schedule_config.breaks || []
+                        };
+
+                        // Check if prayer times are configured
+                        this.prayerTimesEnabled = !!(
+                            this.scheduleConfig.prayer_times.fajr ||
+                            this.scheduleConfig.prayer_times.dhuhr ||
+                            this.scheduleConfig.prayer_times.asr ||
+                            this.scheduleConfig.prayer_times.maghrib ||
+                            this.scheduleConfig.prayer_times.isha
+                        );
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading event:', error);
+                showAlert('Error loading event configuration', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        addCustomField() {
+            this.customFields.push({
+                name: '',
+                label: '',
+                type: 'text',
+                required: false,
+                options: '',
+                placeholder: ''
+            });
+        },
+
+        removeCustomField(index) {
+            this.customFields.splice(index, 1);
+        },
+
+        addTemplate(templateType) {
+            const templates = {
+                dietary: {
+                    name: 'dietary_preference',
+                    label: 'Dietary Preference',
+                    type: 'select',
+                    required: false,
+                    options: 'Halal, Vegetarian, Vegan, No Preference',
+                    placeholder: 'Select your dietary preference'
+                },
+                tshirt: {
+                    name: 't_shirt_size',
+                    label: 'T-Shirt Size',
+                    type: 'select',
+                    required: false,
+                    options: 'XS, S, M, L, XL, XXL, XXXL',
+                    placeholder: 'Select your size'
+                },
+                gender_section: {
+                    name: 'section',
+                    label: 'Section',
+                    type: 'select',
+                    required: true,
+                    options: 'Brothers, Sisters, Family',
+                    placeholder: 'Select your section'
+                },
+                emergency_contact: {
+                    name: 'emergency_contact',
+                    label: 'Emergency Contact',
+                    type: 'text',
+                    required: false,
+                    options: '',
+                    placeholder: 'Emergency contact phone number'
+                },
+                allergies: {
+                    name: 'allergies',
+                    label: 'Allergies/Medical Conditions',
+                    type: 'textarea',
+                    required: false,
+                    options: '',
+                    placeholder: 'Please list any allergies or medical conditions'
+                },
+                volunteer: {
+                    name: 'volunteer_interest',
+                    label: 'Interested in Volunteering?',
+                    type: 'checkbox',
+                    required: false,
+                    options: 'Yes, I want to volunteer',
+                    placeholder: ''
+                }
+            };
+
+            if (templates[templateType]) {
+                this.customFields.push({...templates[templateType]});
+                showAlert(`Added ${templates[templateType].label} field`, 'success');
+            }
+        },
+
+        async saveCustomFields() {
+            try {
+                const response = await authFetch(`/api/events/${this.eventId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        custom_fields: this.customFields
+                    })
+                });
+
+                if (response.ok) {
+                    showAlert('Custom fields saved successfully', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error saving custom fields', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving custom fields:', error);
+                showAlert('Error saving custom fields', 'error');
+            }
+        },
+
+        addScheduleItem() {
+            if (!this.scheduleConfig.program) {
+                this.scheduleConfig.program = [];
+            }
+            this.scheduleConfig.program.push({
+                time: '',
+                activity: ''
+            });
+        },
+
+        removeScheduleItem(index) {
+            this.scheduleConfig.program.splice(index, 1);
+        },
+
+        addBreak() {
+            if (!this.scheduleConfig.breaks) {
+                this.scheduleConfig.breaks = [];
+            }
+            this.scheduleConfig.breaks.push({
+                name: '',
+                start: '',
+                duration: 30
+            });
+        },
+
+        removeBreak(index) {
+            this.scheduleConfig.breaks.splice(index, 1);
+        },
+
+        async saveSchedule() {
+            try {
+                // If prayer times are disabled, clear them
+                if (!this.prayerTimesEnabled) {
+                    this.scheduleConfig.prayer_times = {
+                        fajr: '', dhuhr: '', asr: '', maghrib: '', isha: ''
+                    };
+                }
+
+                const response = await authFetch(`/api/events/${this.eventId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        schedule_config: this.scheduleConfig
+                    })
+                });
+
+                if (response.ok) {
+                    showAlert('Schedule configuration saved successfully', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error saving schedule', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving schedule:', error);
+                showAlert('Error saving schedule', 'error');
+            }
+        }
+    };
+}
+
+console.log('✅ eventConfig function defined');
+</script>
+{% endblock %}

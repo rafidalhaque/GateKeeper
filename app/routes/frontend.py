@@ -48,6 +48,12 @@ def test_supabase():
     return render_template('supabase_test.html', config=get_supabase_config())
 
 
+@bp.route('/admin/events/<uuid:event_id>/configure')
+@admin_required
+def event_configuration(event_id):
+    """Event configuration page for custom fields and schedule"""
+    return render_template('admin/event_config.html', event_id=str(event_id))
+
 # Debug route for testing logout functionality
 @bp.route('/test-logout')
 def test_logout():
