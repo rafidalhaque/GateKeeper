@@ -199,7 +199,7 @@ function dashboardData() {
                 }
                 
                 // Load participants count
-                const participantsRes = await authFetch('/api/participants');
+                const participantsRes = await window.authFetch('/api/participants');
                 if (participantsRes.ok) {
                     const participants = await participantsRes.json();
                     this.stats.totalParticipants = participants.length;

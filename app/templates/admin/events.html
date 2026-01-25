@@ -108,15 +108,10 @@
 
 {% block extra_js %}
 <script>
-// CRITICAL: Define eventsManager BEFORE Alpine.js tries to use it
-// This must execute synchronously before Alpine initializes
-(function() {
-    'use strict';
-    
-    console.log('🔧 Loading eventsManager function...');
+console.log('🔧 Loading eventsManager function...');
 
-    // Define eventsManager function globally for Alpine.js
-    window.eventsManager = function() {
+// Define eventsManager function globally for Alpine.js
+window.eventsManager = function() {
     return {
         events: [],
         filteredEvents: [],
@@ -297,20 +292,20 @@
             }
         }
     };
-    
-    // Debug logging to verify function is defined
-    console.log('✅ eventsManager function defined:', typeof window.eventsManager);
-    
-    // Verify the function can be called
-    try {
-        if (typeof window.eventsManager === 'function') {
-            console.log('✅ eventsManager function is callable and ready for Alpine.js');
-        } else {
-            console.error('❌ eventsManager is not a function:', window.eventsManager);
-        }
-    } catch (error) {
-        console.error('❌ Error checking eventsManager:', error);
+};
+
+// Debug logging to verify function is defined
+console.log('✅ eventsManager function defined:', typeof window.eventsManager);
+
+// Verify the function can be called
+try {
+    if (typeof window.eventsManager === 'function') {
+        console.log('✅ eventsManager function is callable and ready for Alpine.js');
+    } else {
+        console.error('❌ eventsManager is not a function:', window.eventsManager);
     }
-})(); // Immediately invoke to ensure it runs synchronously
+} catch (error) {
+    console.error('❌ Error checking eventsManager:', error);
+}
 </script>
 {% endblock %}
