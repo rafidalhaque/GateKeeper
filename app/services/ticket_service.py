@@ -106,52 +106,44 @@ def render_ticket_template(event, participant):
 
 def generate_ticket_pdf(participant_id):
     """Generate PDF ticket for a participant"""
-    from app.app import create_app
-    app = create_app()
+    participant = Participant.query.get(participant_id)
+    if not participant:
+        return None
     
-    with app.app_context():
-        participant = Participant.query.get(participant_id)
-        if not participant:
-            return None
-        
-        event = Event.query.get(participant.event_id)
-        if not event:
-            return None
-        
-        # Render HTML
-        html_content = render_ticket_template(event, participant)
-        
-        # Generate PDF
-        pdf = HTML(string=html_content).write_pdf()
-        
-        return pdf
+    event = Event.query.get(participant.event_id)
+    if not event:
+        return None
+    
+    # Render HTML
+    html_content = render_ticket_template(event, participant)
+    
+    # Generate PDF
+    pdf = HTML(string=html_content).write_pdf()
+    
+    return pdf
 
 
 def generate_bulk_tickets(event_id):
     """Generate tickets for all participants in an event"""
-    from app.app import create_app
-    app = create_app()
+    participants = Participant.query.filter_by(event_id=event_id).all()
     
-    with app.app_context():
-        participants = Participant.query.filter_by(event_id=event_id).all()
-        
-        generated_count = 0
-        errors = []
-        
-        for participant in participants:
-            try:
-                pdf = generate_ticket_pdf(participant.id)
-                if pdf:
-                    # TODO: Save PDF to storage or attach to email
-                    generated_count += 1
-            except Exception as e:
-                errors.append({
-                    'participant_id': str(participant.id),
-                    'error': str(e)
-                })
-        
-        return {
-            'success': True,
-            'generated_count': generated_count,
-            'errors': errors
-        }
+    generated_count = 0
+    errors = []
+    
+    for participant in participants:
+        try:
+            pdf = generate_ticket_pdf(participant.id)
+            if pdf:
+                # TODO: Save PDF to storage or attach to email
+                generated_count += 1
+        except Exception as e:
+            errors.append({
+                'participant_id': str(participant.id),
+                'error': str(e)
+            })
+    
+    return {
+        'success': True,
+        'generated_count': generated_count,
+        'errors': errors
+    }
