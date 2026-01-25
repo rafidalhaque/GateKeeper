@@ -674,7 +674,7 @@ window.emailTemplatesManager = function() {
 
         loadTemplate(type) {
             if (type === 'basic') {
-                this.formData.html_content = `<!DOCTYPE html>
+                this.formData.html_content = `{% raw %}<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -706,9 +706,9 @@ window.emailTemplatesManager = function() {
         <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
     </div>
 </body>
-</html>`;
+</html>{% endraw %}`;
             } else if (type === 'ticket') {
-                this.formData.html_content = `<!DOCTYPE html>
+                this.formData.html_content = `{% raw %}<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -755,7 +755,7 @@ window.emailTemplatesManager = function() {
         <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
     </div>
 </body>
-</html>`;
+</html>{% endraw %}`;
             }
         }
     };
