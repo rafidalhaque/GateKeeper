@@ -13,69 +13,162 @@
     <!-- Scanner Controls -->
     <div class="card bg-base-100 shadow-xl mb-4">
         <div class="card-body">
-            <div class="form-control">
-                <label class="label cursor-pointer">
-                    <span class="label-text">Quick Scan Mode (Auto check-in)</span>
-                    <input type="checkbox" class="toggle" x-model="quickScanMode">
-                </label>
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="form-control">
+                    <label class="label cursor-pointer">
+                        <span class="label-text">Quick Scan Mode (Auto check-in)</span>
+                        <input type="checkbox" class="toggle" x-model="quickScanMode">
+                    </label>
+                </div>
+                
+                <button 
+                    class="btn btn-primary" 
+                    @click="startScanner()"
+                    x-show="!scannerActive"
+                >
+                    Start Scanner
+                </button>
+                
+                <button 
+                    class="btn btn-error" 
+                    @click="stopScanner()"
+                    x-show="scannerActive"
+                >
+                    Stop Scanner
+                </button>
             </div>
-            
-            <button 
-                class="btn btn-primary" 
-                @click="startScanner()"
-                x-show="!scannerActive"
-            >
-                Start Scanner
-            </button>
-            
-            <button 
-                class="btn btn-error" 
-                @click="stopScanner()"
-                x-show="scannerActive"
-            >
-                Stop Scanner
-            </button>
         </div>
     </div>
     
-    <!-- Video Preview -->
-    <div class="card bg-base-100 shadow-xl mb-4" x-show="scannerActive">
-        <div class="card-body">
-            <video id="scanner-video" class="w-full rounded" autoplay></video>
+    <!-- Main Scanner Layout: Camera Left, Details Right -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Left Side: Camera Preview (Smaller) -->
+        <div class="lg:col-span-1">
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title text-lg mb-2">Camera</h2>
+                    <div class="relative" x-show="scannerActive">
+                        <video 
+                            id="scanner-video" 
+                            class="w-full rounded-lg border-2 border-base-300" 
+                            autoplay
+                            style="max-height: 500px; object-fit: cover;"
+                        ></video>
+                        <div class="absolute inset-0 pointer-events-none flex items-center justify-center" x-show="!scannerActive">
+                            <div class="text-center text-base-content/50">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <p class="text-sm">Camera not active</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center text-base-content/50 py-8" x-show="!scannerActive">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <p class="text-sm">Click "Start Scanner" to begin</p>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <!-- Participant Info -->
-    <div class="card bg-base-100 shadow-xl" x-show="participantData">
-        <div class="card-body">
-            <h2 class="card-title">Participant Information</h2>
-            
-            <template x-if="participantData">
-                <div>
-                    <p><strong>Name:</strong> <span x-text="participantData.name"></span></p>
-                    <p><strong>Email:</strong> <span x-text="participantData.email"></span></p>
-                    <p><strong>Event:</strong> <span x-text="participantData.event.name"></span></p>
+        
+        <!-- Right Side: Participant Details (Blank until scan) -->
+        <div class="lg:col-span-2">
+            <div class="card bg-base-100 shadow-xl h-full">
+                <div class="card-body">
+                    <h2 class="card-title text-lg mb-4">Participant Details</h2>
                     
-                    <template x-if="participantData.team">
-                        <p><strong>Team:</strong> <span x-text="participantData.team.team_name"></span></p>
-                    </template>
+                    <!-- Empty State -->
+                    <div class="flex flex-col items-center justify-center py-16" x-show="!participantData">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-base-content/20 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <p class="text-base-content/50 text-lg">Scan a QR code to view participant information</p>
+                    </div>
                     
-                    <template x-if="participantData.attendance_status">
-                        <div class="alert alert-success mt-4">
-                            <span>Already checked in at: <span x-text="participantData.attended_at"></span></span>
+                    <!-- Participant Information -->
+                    <template x-if="participantData">
+                        <div class="space-y-4">
+                            <div class="divider"></div>
+                            
+                            <!-- Name -->
+                            <div>
+                                <label class="text-sm font-semibold text-base-content/70">Name</label>
+                                <p class="text-xl font-bold mt-1" x-text="participantData.name"></p>
+                            </div>
+                            
+                            <!-- Email -->
+                            <div>
+                                <label class="text-sm font-semibold text-base-content/70">Email</label>
+                                <p class="text-lg mt-1" x-text="participantData.email"></p>
+                            </div>
+                            
+                            <!-- Event -->
+                            <div>
+                                <label class="text-sm font-semibold text-base-content/70">Event</label>
+                                <p class="text-lg mt-1" x-text="participantData.event.name"></p>
+                            </div>
+                            
+                            <!-- Team (if applicable) -->
+                            <template x-if="participantData.team">
+                                <div>
+                                    <label class="text-sm font-semibold text-base-content/70">Team</label>
+                                    <p class="text-lg mt-1" x-text="participantData.team.team_name"></p>
+                                </div>
+                            </template>
+                            
+                            <!-- T-Shirt Size (if available) -->
+                            <template x-if="participantData.t_shirt_size">
+                                <div>
+                                    <label class="text-sm font-semibold text-base-content/70">T-Shirt Size</label>
+                                    <p class="text-lg mt-1" x-text="participantData.t_shirt_size"></p>
+                                </div>
+                            </template>
+                            
+                            <div class="divider"></div>
+                            
+                            <!-- Attendance Status -->
+                            <template x-if="participantData.attendance_status">
+                                <div class="alert alert-success">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <h3 class="font-bold">Already Checked In</h3>
+                                        <div class="text-xs">Checked in at: <span x-text="participantData.attended_at"></span></div>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <!-- Check-in Button -->
+                            <template x-if="!participantData.attendance_status && !quickScanMode">
+                                <button 
+                                    class="btn btn-success btn-lg w-full mt-4" 
+                                    @click="confirmCheckin()"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Mark as Attended
+                                </button>
+                            </template>
+                            
+                            <!-- Auto Check-in Success Message -->
+                            <template x-if="participantData.attendance_status && quickScanMode">
+                                <div class="alert alert-info">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span>Auto-checked in successfully</span>
+                                </div>
+                            </template>
                         </div>
                     </template>
-                    
-                    <template x-if="!participantData.attendance_status && !quickScanMode">
-                        <button 
-                            class="btn btn-success mt-4" 
-                            @click="confirmCheckin()"
-                        >
-                            Mark as Attended
-                        </button>
-                    </template>
                 </div>
-            </template>
+            </div>
         </div>
     </div>
 </div>
