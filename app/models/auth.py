@@ -91,3 +91,8 @@ class AdminUser(db.Model):
             return False
         
         return any(p.key in permission_keys for p in self.role.permissions)
+
+
+# Import CheckinLog after all classes are defined to avoid circular import issues
+# This ensures SQLAlchemy can resolve the 'CheckinLog' relationship in AdminUser
+from app.models.events import CheckinLog  # noqa: F401, E402

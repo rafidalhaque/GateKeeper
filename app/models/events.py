@@ -147,6 +147,11 @@ class CeleryJob(db.Model):
         return f'<CeleryJob {self.task_name} - {self.status}>'
 
 
+# Import AdminUser after all classes are defined to avoid circular import issues
+# This ensures SQLAlchemy can resolve the 'AdminUser' relationship in CheckinLog
+from app.models.auth import AdminUser  # noqa: F401, E402
+
+
 class EmailTemplate(db.Model):
     """Email template model for managing email designs"""
     __tablename__ = 'email_templates'
