@@ -35,7 +35,7 @@ services:
 
   # Flask application
   web:
-    build: .
+    build: ..
     ports:
       - "5000:5000"
     environment:
@@ -45,7 +45,7 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     env_file:
-      - .env
+      - ../.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,7 +64,7 @@ services:
 
   # Celery worker
   celery-worker:
-    build: .
+    build: ..
     environment:
       - FLASK_ENV=production
       - DATABASE_URL=postgresql://gatekeeper:gatekeeper_password@postgres:5432/gatekeeper
@@ -72,7 +72,7 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     env_file:
-      - .env
+      - ../.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,7 +87,7 @@ services:
 
   # Celery beat (for scheduled tasks)
   celery-beat:
-    build: .
+    build: ..
     environment:
       - FLASK_ENV=production
       - DATABASE_URL=postgresql://gatekeeper:gatekeeper_password@postgres:5432/gatekeeper
@@ -95,7 +95,7 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     env_file:
-      - .env
+      - ../.env
     depends_on:
       postgres:
         condition: service_healthy

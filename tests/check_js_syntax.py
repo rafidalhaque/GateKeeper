@@ -9,7 +9,7 @@ def check_js_syntax():
 
     try:
         # Read the admin base template
-        with open('C:/Users/USER/PycharmProjects/GateKeeper/app/templates/admin/base.html', 'r') as f:
+        with open('/app/templates/admin/base.html', 'r') as f:
             content = f.read()
 
         # Extract JavaScript content between <script> tags
@@ -71,7 +71,7 @@ def check_nav_component():
     print("=" * 30)
 
     try:
-        with open('C:/Users/USER/PycharmProjects/GateKeeper/app/templates/admin/components/nav.html', 'r') as f:
+        with open('/app/templates/admin/components/nav.html', 'r') as f:
             content = f.read()
 
         # Check for logout button

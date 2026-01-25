@@ -150,7 +150,7 @@ SECRET_KEY=generate-a-secure-key-here
 - `GET /api/reports/export-csv?event_id=<id>` - Export CSV
 - `GET /api/reports/team-stats?event_id=<id>` - Team statistics
 
-See [plan.md](plan.md) for complete API documentation.
+See [plan.md](docs/plan.md) for complete API documentation.
 
 ## Development
 
@@ -200,7 +200,7 @@ See [plan.md](plan.md) for complete API documentation.
 
 ## Deployment
 
-See the [Deployment Checklist](plan.md#20-deployment-checklist) in plan.md for comprehensive deployment instructions including:
+See the [Deployment Checklist](docs/plan.md#20-deployment-checklist) in plan.md for comprehensive deployment instructions including:
 - Server setup
 - Nginx configuration
 - SSL/TLS setup

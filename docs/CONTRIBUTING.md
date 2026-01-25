@@ -17,7 +17,7 @@ Thank you for considering contributing to GateKeeper! This document provides gui
 
 ## Development Setup
 
-Follow the development setup instructions in the [README.md](README.md#development).
+Follow the development setup instructions in the [README.md](../README.md#development).
 
 ## Code Style
 
