@@ -22,7 +22,8 @@ redis==5.0.1
 Flask-Mail==0.9.1
 
 # PDF Generation
-WeasyPrint==60.1
+WeasyPrint==59.0
+pydyf==0.10.0
 
 # QR Code
 qrcode[pil]==7.4.2
