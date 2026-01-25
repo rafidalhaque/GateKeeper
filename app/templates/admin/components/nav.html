@@ -151,29 +151,23 @@
 
         // Attach logout handlers to all logout buttons
         function attachLogoutHandlers() {
-            console.log('Attaching logout handlers...');
-
-            // Handle all logout buttons by ID and class
             const logoutSelectors = [
-                '#navLogoutBtn',    // Navbar dropdown
-                '#logoutBtn',       // Sidebar
-                'a[href*="logout"]', // Any link with logout
-                '.logout-btn',      // Any logout button class
-                '[data-action="logout"]' // Any element with logout action
+                '#navLogoutBtn',
+                '#logoutBtn',
+                'a[href*="logout"]',
+                '.logout-btn',
+                '[data-action="logout"]'
             ];
 
             let handlersAttached = 0;
 
-            logoutSelectors.forEach((selector, index) => {
+            logoutSelectors.forEach(selector => {
                 const elements = document.querySelectorAll(selector);
-                console.log(`Selector "${selector}" found ${elements.length} elements`);
 
-                elements.forEach((element, elemIndex) => {
+                elements.forEach(element => {
                     if (!element.hasAttribute('data-logout-handler')) {
-                        console.log(`Attaching handler to element ${elemIndex + 1} for selector "${selector}"`);
                         element.addEventListener('click', function(e) {
                             e.preventDefault();
-                            console.log('Logout button clicked:', selector);
                             window.handleLogout();
                         });
                         element.setAttribute('data-logout-handler', 'true');
@@ -182,15 +176,12 @@
                 });
             });
 
-            // Also handle text-based logout detection
             const allLinks = document.querySelectorAll('a');
             allLinks.forEach(link => {
                 if (link.textContent.toLowerCase().includes('logout') &&
                     !link.hasAttribute('data-logout-handler')) {
-                    console.log('Found text-based logout link:', link.textContent.trim());
                     link.addEventListener('click', function(e) {
                         e.preventDefault();
-                        console.log('Text-based logout clicked');
                         window.handleLogout();
                     });
                     link.setAttribute('data-logout-handler', 'true');
@@ -198,7 +189,6 @@
                 }
             });
 
-            console.log(`Total logout handlers attached: ${handlersAttached}`);
             return handlersAttached;
         }
 

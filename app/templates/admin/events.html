@@ -108,7 +108,10 @@
 
 {% block extra_js %}
 <script>
-function eventsManager() {
+console.log('🔧 Loading eventsManager function...');
+
+// Define eventsManager function globally for Alpine.js
+window.eventsManager = function() {
     return {
         events: [],
         filteredEvents: [],
@@ -123,45 +126,63 @@ function eventsManager() {
             mode: 'solo',
             passcode: ''
         },
-        
+
         async fetchEvents() {
             this.loading = true;
             try {
-                const response = await authFetch('/api/events');
+                // Check if authFetch is available
+                if (typeof window.authFetch !== 'function') {
+                    console.error('authFetch function not available');
+                    throw new Error('authFetch function not available');
+                }
+
+                const response = await window.authFetch('/api/events');
                 if (response.ok) {
                     this.events = await response.json();
                     this.filterEvents();
                 } else {
-                    showAlert('Error loading events', 'error');
+                    if (typeof window.showAlert === 'function') {
+                        window.showAlert('Error loading events', 'error');
+                    } else {
+                        console.error('Error loading events');
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching events:', error);
-                showAlert('Error loading events', 'error');
+                if (typeof window.showAlert === 'function') {
+                    window.showAlert('Error loading events', 'error');
+                } else {
+                    alert('Error loading events');
+                }
             } finally {
                 this.loading = false;
             }
         },
-        
+
         filterEvents() {
             if (!this.searchQuery) {
                 this.filteredEvents = this.events;
             } else {
                 const query = this.searchQuery.toLowerCase();
-                this.filteredEvents = this.events.filter(event => 
+                this.filteredEvents = this.events.filter(event =>
                     event.name.toLowerCase().includes(query) ||
                     (event.venue && event.venue.toLowerCase().includes(query))
                 );
             }
         },
-        
+
         formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
+            try {
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } catch (error) {
+                return dateString; // Fallback to original string
+            }
         },
-        
+
         openCreateModal() {
             this.editingEvent = null;
             this.formData = {
@@ -173,7 +194,7 @@ function eventsManager() {
             };
             this.showModal = true;
         },
-        
+
         openEditModal(event) {
             this.editingEvent = event;
             this.formData = {
@@ -185,56 +206,106 @@ function eventsManager() {
             };
             this.showModal = true;
         },
-        
+
         async saveEvent() {
             try {
-                const url = this.editingEvent 
+                // Check if authFetch is available
+                if (typeof window.authFetch !== 'function') {
+                    throw new Error('authFetch function not available');
+                }
+
+                const url = this.editingEvent
                     ? `/api/events/${this.editingEvent.id}`
                     : '/api/events';
                 const method = this.editingEvent ? 'PUT' : 'POST';
-                
-                const response = await authFetch(url, {
+
+                const response = await window.authFetch(url, {
                     method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(this.formData)
                 });
-                
+
                 if (response.ok) {
-                    showAlert(`Event ${this.editingEvent ? 'updated' : 'created'} successfully`, 'success');
+                    const message = `Event ${this.editingEvent ? 'updated' : 'created'} successfully`;
+                    if (typeof window.showAlert === 'function') {
+                        window.showAlert(message, 'success');
+                    } else {
+                        alert(message);
+                    }
                     this.fetchEvents();
                     this.showModal = false;
                 } else {
                     const error = await response.json();
-                    showAlert(error.error || 'Error saving event', 'error');
+                    const errorMsg = error.error || 'Error saving event';
+                    if (typeof window.showAlert === 'function') {
+                        window.showAlert(errorMsg, 'error');
+                    } else {
+                        alert(errorMsg);
+                    }
                 }
             } catch (error) {
                 console.error('Error saving event:', error);
-                showAlert('Error saving event', 'error');
+                if (typeof window.showAlert === 'function') {
+                    window.showAlert('Error saving event', 'error');
+                } else {
+                    alert('Error saving event');
+                }
             }
         },
-        
+
         async deleteEvent(eventId) {
             if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
                 return;
             }
-            
+
             try {
-                const response = await authFetch(`/api/events/${eventId}`, {
+                // Check if authFetch is available
+                if (typeof window.authFetch !== 'function') {
+                    throw new Error('authFetch function not available');
+                }
+
+                const response = await window.authFetch(`/api/events/${eventId}`, {
                     method: 'DELETE'
                 });
-                
+
                 if (response.ok) {
-                    showAlert('Event deleted successfully', 'success');
+                    if (typeof window.showAlert === 'function') {
+                        window.showAlert('Event deleted successfully', 'success');
+                    } else {
+                        alert('Event deleted successfully');
+                    }
                     this.fetchEvents();
                 } else {
-                    showAlert('Error deleting event', 'error');
+                    if (typeof window.showAlert === 'function') {
+                        window.showAlert('Error deleting event', 'error');
+                    } else {
+                        alert('Error deleting event');
+                    }
                 }
             } catch (error) {
                 console.error('Error deleting event:', error);
-                showAlert('Error deleting event', 'error');
+                if (typeof window.showAlert === 'function') {
+                    window.showAlert('Error deleting event', 'error');
+                } else {
+                    alert('Error deleting event');
+                }
             }
         }
     };
+};
+
+// Debug logging to verify function is defined
+console.log('✅ eventsManager function defined:', typeof window.eventsManager);
+
+// Verify the function can be called
+try {
+    if (typeof window.eventsManager === 'function') {
+        console.log('✅ eventsManager function is callable and ready for Alpine.js');
+    } else {
+        console.error('❌ eventsManager is not a function:', window.eventsManager);
+    }
+} catch (error) {
+    console.error('❌ Error checking eventsManager:', error);
 }
 </script>
 {% endblock %}

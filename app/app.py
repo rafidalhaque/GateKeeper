@@ -62,4 +62,14 @@ def create_app(config_name='default'):
     from app.utils.errors import register_error_handlers
     register_error_handlers(app)
     
+    # Add cache-busting headers for development
+    if app.config['DEBUG']:
+        @app.after_request
+        def add_header(response):
+            """Add headers to prevent caching in development"""
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '-1'
+            return response
+
     return app
