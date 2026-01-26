@@ -1,4 +1,4 @@
-<!-- CSV Import Modal -->
+so<!-- CSV Import Modal -->
 <div x-show="showImportModal"
      class="modal" 
      :class="{ 'modal-open': showImportModal }">
@@ -10,11 +10,34 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div>
-                <p class="text-sm">CSV file should have the following columns:</p>
-                <p class="text-sm font-mono">name, email, phone (optional), team_name (optional for team events)</p>
+                <p class="text-sm font-semibold mb-2">Required CSV Columns:</p>
+                <template x-if="event?.mode === 'team'">
+                    <p class="text-sm font-mono mb-2">team_id, team_name, member_name, member_email</p>
+                </template>
+                <template x-if="event?.mode === 'solo'">
+                    <p class="text-sm font-mono mb-2">participant_name, participant_email</p>
+                </template>
+                <template x-if="event?.custom_fields && event.custom_fields.length > 0">
+                    <div class="mt-2">
+                        <p class="text-sm font-semibold">Custom Fields for this event:</p>
+                        <p class="text-sm font-mono" x-text="event.custom_fields.map(f => f.name).join(', ')"></p>
+                    </div>
+                </template>
             </div>
         </div>
-        
+
+        <!-- Download Template Button -->
+        <div class="mb-4">
+            <a :href="`/admin/events/${eventId}/csv-template`"
+               download
+               class="btn btn-outline btn-sm w-full">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Download CSV Template
+            </a>
+        </div>
+
         <form @submit.prevent="importCSV()">
             <!-- File Upload -->
             <div class="form-control w-full mb-4">

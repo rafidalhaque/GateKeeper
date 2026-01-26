@@ -85,12 +85,31 @@ Custom field values stored in `participants.custom_data` (JSONB):
 - ✅ Configuration UI
 - ✅ API endpoints (GET/PUT)
 - ✅ Preview system
+- ✅ **CSV Import with Custom Fields**
 
 ### Future (Ready for Integration)
 - ⏳ Dynamic registration forms (will use custom_fields)
 - ⏳ Ticket templates (placeholders for custom fields)
 - ⏳ Email templates (placeholders for schedule)
 - ⏳ Reports (export custom field data)
+
+---
+
+## CSV Import
+
+Custom fields are fully integrated with CSV import:
+
+1. **Download Template**: Auto-generates CSV with all custom field columns
+2. **Import Data**: System maps CSV columns to custom fields
+3. **Storage**: Values stored in `participants.custom_data` JSONB
+
+**Example:**
+```csv
+participant_name,participant_email,dietary_preference,emergency_contact
+John Doe,john@example.com,Halal,+1234567890
+```
+
+**See:** `docs/CSV_IMPORT_WITH_CUSTOM_FIELDS.md` for complete guide
 
 ---
 

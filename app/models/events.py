@@ -21,6 +21,8 @@ class Event(db.Model):
     passcode = db.Column(String(100))  # nullable, for fallback/public access
     ticket_template_html = db.Column(Text)
     ticket_template_css = db.Column(Text)
+    token_template_html = db.Column(Text)  # access token design
+    token_template_css = db.Column(Text)  # access token styling
     custom_fields = db.Column(JSONB)  # flexible field configuration
     schedule_config = db.Column(JSONB)  # prayer times, breaks, session timings
     created_at = db.Column(DateTime, default=datetime.utcnow)
@@ -65,8 +67,7 @@ class Participant(db.Model):
     team_id = db.Column(Integer, ForeignKey('teams.id', ondelete='SET NULL'))
     name = db.Column(String(255), nullable=False)
     email = db.Column(String(255), nullable=False)
-    t_shirt_size = db.Column(String(10))
-    custom_data = db.Column(JSONB)  # stores event-specific custom field values
+    custom_data = db.Column(JSONB)  # stores event-specific custom field values (including t_shirt_size)
     unique_url_uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4, nullable=False)
     attendance_status = db.Column(Boolean, default=False)
     attended_at = db.Column(DateTime)

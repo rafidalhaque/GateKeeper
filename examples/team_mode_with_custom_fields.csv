@@ -1,0 +1,9 @@
+team_id,team_name,member_name,member_email,t_shirt_size,player_role,jersey_number
+TEAM001,Warriors,Ahmed Khan,ahmed@example.com,L,Captain,10
+TEAM001,Warriors,Bilal Malik,bilal@example.com,M,Player,7
+TEAM001,Warriors,Usman Ali,usman@example.com,L,Player,15
+TEAM002,Champions,Umar Farooq,umar@example.com,XL,Captain,9
+TEAM002,Champions,Yusuf Ahmed,yusuf@example.com,M,Player,11
+TEAM002,Champions,Zaid Hassan,zaid@example.com,L,Reserve,23
+TEAM003,Lions,Ibrahim Khan,ibrahim@example.com,L,Captain,8
+TEAM003,Lions,Khalid Rashid,khalid@example.com,M,Player,6

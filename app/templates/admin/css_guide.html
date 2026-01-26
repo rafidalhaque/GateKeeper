@@ -1,0 +1,436 @@
+{% extends "admin/base.html" %}
+
+{% block title %}CSS Design Guide{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold mb-2">CSS Design Guide</h1>
+        <p class="text-base-content/70">Reference guide for designing tickets, tokens, and email templates</p>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <a href="#page-setup" class="btn btn-sm btn-outline">Page Setup</a>
+        <a href="#layout" class="btn btn-sm btn-outline">Layout</a>
+        <a href="#typography" class="btn btn-sm btn-outline">Typography</a>
+        <a href="#colors" class="btn btn-sm btn-outline">Colors</a>
+        <a href="#spacing" class="btn btn-sm btn-outline">Spacing</a>
+        <a href="#borders" class="btn btn-sm btn-outline">Borders</a>
+        <a href="#badges" class="btn btn-sm btn-outline">Badge Sizes</a>
+        <a href="#email" class="btn btn-sm btn-outline">Email Best Practices</a>
+    </div>
+
+    <!-- Content Sections -->
+    <div class="space-y-8">
+
+        <!-- Page Setup -->
+        <section id="page-setup" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">📄 Page Setup (@page)</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">Common Page Sizes</h3>
+                        <div class="overflow-x-auto">
+                            <table class="table table-zebra">
+                                <thead>
+                                    <tr>
+                                        <th>Size</th>
+                                        <th>Dimensions</th>
+                                        <th>Use Case</th>
+                                        <th>CSS Code</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>A4</td>
+                                        <td>210 × 297mm</td>
+                                        <td>Full tickets, certificates</td>
+                                        <td><code>size: A4;</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>A5</td>
+                                        <td>148 × 210mm</td>
+                                        <td>Half-page tickets</td>
+                                        <td><code>size: A5;</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Letter</td>
+                                        <td>8.5 × 11in</td>
+                                        <td>US standard</td>
+                                        <td><code>size: Letter;</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Badge</td>
+                                        <td>3.5 × 2in</td>
+                                        <td>Name badges, access cards</td>
+                                        <td><code>size: 3.5in 2in;</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Custom</td>
+                                        <td>Any size</td>
+                                        <td>Special requirements</td>
+                                        <td><code>size: 100mm 150mm;</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mockup-code">
+                        <pre data-prefix="1"><code>@page {</code></pre>
+                        <pre data-prefix="2"><code>    size: A4 portrait;  /* or landscape */</code></pre>
+                        <pre data-prefix="3"><code>    margin: 20mm;       /* All sides */</code></pre>
+                        <pre data-prefix="4"><code>    /* Or individually: */</code></pre>
+                        <pre data-prefix="5"><code>    margin-top: 20mm;</code></pre>
+                        <pre data-prefix="6"><code>    margin-right: 15mm;</code></pre>
+                        <pre data-prefix="7"><code>    margin-bottom: 20mm;</code></pre>
+                        <pre data-prefix="8"><code>    margin-left: 15mm;</code></pre>
+                        <pre data-prefix="9"><code>}</code></pre>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span><strong>Units:</strong> Use <code>mm</code> (millimeters), <code>cm</code> (centimeters), <code>in</code> (inches), or <code>px</code> (pixels)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Layout -->
+        <section id="layout" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">📐 Layout & Flexbox</h2>
+
+                <div class="space-y-4">
+                    <div class="mockup-code">
+                        <pre data-prefix="$"><code>/* Center content */</code></pre>
+                        <pre data-prefix="1"><code>.container {</code></pre>
+                        <pre data-prefix="2"><code>    display: flex;</code></pre>
+                        <pre data-prefix="3"><code>    justify-content: center;  /* horizontal */</code></pre>
+                        <pre data-prefix="4"><code>    align-items: center;       /* vertical */</code></pre>
+                        <pre data-prefix="5"><code>    flex-direction: column;    /* stack items */</code></pre>
+                        <pre data-prefix="6"><code>}</code></pre>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="mockup-code">
+                            <pre data-prefix="$"><code>/* Two-column layout */</code></pre>
+                            <pre data-prefix="1"><code>.row {</code></pre>
+                            <pre data-prefix="2"><code>    display: flex;</code></pre>
+                            <pre data-prefix="3"><code>    justify-content: space-between;</code></pre>
+                            <pre data-prefix="4"><code>}</code></pre>
+                        </div>
+
+                        <div class="mockup-code">
+                            <pre data-prefix="$"><code>/* Full height */</code></pre>
+                            <pre data-prefix="1"><code>.badge {</code></pre>
+                            <pre data-prefix="2"><code>    height: 2in;</code></pre>
+                            <pre data-prefix="3"><code>    box-sizing: border-box;</code></pre>
+                            <pre data-prefix="4"><code>}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Typography -->
+        <section id="typography" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">✍️ Typography</h2>
+
+                <div class="space-y-4">
+                    <div class="mockup-code">
+                        <pre data-prefix="1"><code>body { font-family: Arial, sans-serif; }</code></pre>
+                        <pre data-prefix="2"><code>h1 { font-size: 32px; font-weight: bold; }</code></pre>
+                        <pre data-prefix="3"><code>h2 { font-size: 24px; font-weight: 600; }</code></pre>
+                        <pre data-prefix="4"><code>p { font-size: 16px; line-height: 1.5; }</code></pre>
+                        <pre data-prefix="5"><code>.small { font-size: 12px; }</code></pre>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <span><strong>PDF Safety:</strong> Stick to common fonts: Arial, Helvetica, Times New Roman, Courier, Georgia</span>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold mb-2">Text Alignment & Transform</h3>
+                        <div class="mockup-code">
+                            <pre data-prefix="1"><code>text-align: center;      /* left, center, right, justify */</code></pre>
+                            <pre data-prefix="2"><code>text-transform: uppercase; /* lowercase, capitalize */</code></pre>
+                            <pre data-prefix="3"><code>text-decoration: underline; /* none, line-through */</code></pre>
+                            <pre data-prefix="4"><code>letter-spacing: 2px;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Colors -->
+        <section id="colors" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">🎨 Colors</h2>
+
+                <div class="space-y-4">
+                    <div class="mockup-code">
+                        <pre data-prefix="1"><code>color: #333333;           /* Text color (hex) */</code></pre>
+                        <pre data-prefix="2"><code>background: #f5f5f5;      /* Background (hex) */</code></pre>
+                        <pre data-prefix="3"><code>background: rgb(255, 0, 0); /* RGB */</code></pre>
+                        <pre data-prefix="4"><code>background: rgba(0, 0, 0, 0.5); /* With transparency */</code></pre>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold mb-2">Gradients</h3>
+                        <div class="mockup-code">
+                            <pre data-prefix="1"><code>background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);</code></pre>
+                            <pre data-prefix="2"><code>background: linear-gradient(to right, #f093fb 0%, #f5576c 100%);</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="text-center">
+                            <div class="w-full h-16 bg-blue-500 rounded mb-1"></div>
+                            <code class="text-xs">#3b82f6</code>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-full h-16 bg-purple-500 rounded mb-1"></div>
+                            <code class="text-xs">#a855f7</code>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-full h-16 bg-green-500 rounded mb-1"></div>
+                            <code class="text-xs">#22c55e</code>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-full h-16 bg-red-500 rounded mb-1"></div>
+                            <code class="text-xs">#ef4444</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Spacing -->
+        <section id="spacing" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">📏 Spacing (Padding & Margin)</h2>
+
+                <div class="space-y-4">
+                    <div class="mockup-code">
+                        <pre data-prefix="1"><code>/* Padding (inside spacing) */</code></pre>
+                        <pre data-prefix="2"><code>padding: 20px;              /* All sides */</code></pre>
+                        <pre data-prefix="3"><code>padding: 10px 20px;         /* Top/Bottom, Left/Right */</code></pre>
+                        <pre data-prefix="4"><code>padding: 10px 15px 20px 15px; /* Top, Right, Bottom, Left */</code></pre>
+                        <pre data-prefix="5"><code></code></pre>
+                        <pre data-prefix="6"><code>/* Margin (outside spacing) */</code></pre>
+                        <pre data-prefix="7"><code>margin: 20px;               /* All sides */</code></pre>
+                        <pre data-prefix="8"><code>margin: 0 auto;             /* Center horizontally */</code></pre>
+                        <pre data-prefix="9"><code>margin-top: 30px;</code></pre>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <span><strong>Tip:</strong> Use consistent spacing (10px, 20px, 30px) for professional look</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Borders -->
+        <section id="borders" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">🔲 Borders & Shadows</h2>
+
+                <div class="space-y-4">
+                    <div class="mockup-code">
+                        <pre data-prefix="1"><code>border: 2px solid #333;     /* Width, Style, Color */</code></pre>
+                        <pre data-prefix="2"><code>border-radius: 10px;        /* Rounded corners */</code></pre>
+                        <pre data-prefix="3"><code>border-top: 3px solid #f00; /* Single side */</code></pre>
+                        <pre data-prefix="4"><code></code></pre>
+                        <pre data-prefix="5"><code>/* Box shadow */</code></pre>
+                        <pre data-prefix="6"><code>box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);</code></pre>
+                        <pre data-prefix="7"><code>box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); /* Stronger */</code></pre>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="border-2 border-black p-4 text-center">
+                            <p>Solid Border</p>
+                            <code class="text-xs">border: 2px solid</code>
+                        </div>
+                        <div class="border-2 border-dashed border-gray-500 p-4 text-center">
+                            <p>Dashed Border</p>
+                            <code class="text-xs">border: 2px dashed</code>
+                        </div>
+                        <div class="rounded-lg border-2 border-blue-500 p-4 text-center">
+                            <p>Rounded Border</p>
+                            <code class="text-xs">border-radius: 10px</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Badge Sizes -->
+        <section id="badges" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">🎫 Common Badge/Token Sizes</h2>
+
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Size</th>
+                                <th>CSS</th>
+                                <th>Use Case</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Credit Card</td>
+                                <td>3.375" × 2.125"</td>
+                                <td><code>size: 3.375in 2.125in;</code></td>
+                                <td>Standard badge size</td>
+                            </tr>
+                            <tr>
+                                <td>Business Card</td>
+                                <td>3.5" × 2"</td>
+                                <td><code>size: 3.5in 2in;</code></td>
+                                <td>Access cards</td>
+                            </tr>
+                            <tr>
+                                <td>Jumbo Badge</td>
+                                <td>4" × 3"</td>
+                                <td><code>size: 4in 3in;</code></td>
+                                <td>Conferences</td>
+                            </tr>
+                            <tr>
+                                <td>Lanyard Badge</td>
+                                <td>4" × 6"</td>
+                                <td><code>size: 4in 6in;</code></td>
+                                <td>Hanging badges</td>
+                            </tr>
+                            <tr>
+                                <td>Wristband</td>
+                                <td>10" × 1"</td>
+                                <td><code>size: 10in 1in;</code></td>
+                                <td>Festival bands</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Email Best Practices -->
+        <section id="email" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">📧 Email Template Best Practices</h2>
+
+                <div class="space-y-4">
+                    <div class="alert alert-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <div>
+                            <strong>Email clients are limited!</strong>
+                            <ul class="list-disc ml-6 mt-2">
+                                <li>Use tables for layout (not flexbox)</li>
+                                <li>Inline CSS only (no <code>&lt;style&gt;</code> tags)</li>
+                                <li>Avoid advanced CSS (transforms, animations)</li>
+                                <li>Test in multiple clients (Gmail, Outlook, etc.)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold mb-2">Safe Email Template Structure</h3>
+                        <div class="mockup-code">
+                            <pre data-prefix="1"><code>&lt;table width="600" cellpadding="0" cellspacing="0"&gt;</code></pre>
+                            <pre data-prefix="2"><code>  &lt;tr&gt;</code></pre>
+                            <pre data-prefix="3"><code>    &lt;td style="padding: 20px; background: #f5f5f5;"&gt;</code></pre>
+                            <pre data-prefix="4"><code>      &lt;h1 style="color: #333; font-family: Arial;"&gt;Hello!&lt;/h1&gt;</code></pre>
+                            <pre data-prefix="5"><code>      &lt;p style="color: #666; line-height: 1.5;"&gt;Content here&lt;/p&gt;</code></pre>
+                            <pre data-prefix="6"><code>    &lt;/td&gt;</code></pre>
+                            <pre data-prefix="7"><code>  &lt;/tr&gt;</code></pre>
+                            <pre data-prefix="8"><code>&lt;/table&gt;</code></pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold mb-2">✅ Do's</h3>
+                        <ul class="list-disc ml-6 space-y-1">
+                            <li>Use inline styles</li>
+                            <li>Set explicit widths (e.g., width="600")</li>
+                            <li>Use hex colors (#ffffff)</li>
+                            <li>Keep max width ~600px for mobile</li>
+                            <li>Use absolute image URLs</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold mb-2">❌ Don'ts</h3>
+                        <ul class="list-disc ml-6 space-y-1">
+                            <li>No flexbox or grid</li>
+                            <li>No position: absolute/fixed</li>
+                            <li>No background images (limited support)</li>
+                            <li>No web fonts (stick to Arial, Georgia, etc.)</li>
+                            <li>No JavaScript</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Examples -->
+        <section class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">⚡ Quick Copy-Paste Examples</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-bold mb-2">Simple Badge Template</h3>
+                        <div class="mockup-code text-xs">
+                            <pre><code>&lt;style&gt;
+  @page { size: 3.5in 2in; margin: 0; }
+  body { margin: 0; font-family: Arial; }
+  .badge {
+    width: 3.5in; height: 2in;
+    padding: 15px; box-sizing: border-box;
+    border: 2px solid #000;
+    text-align: center;
+  }
+&lt;/style&gt;
+&lt;div class="badge"&gt;
+  &lt;h1&gt;{{ "{{" }} event_name }}&lt;/h1&gt;
+  &lt;p&gt;{{ "{{" }} participant_name }}&lt;/p&gt;
+  &lt;img src="{{ "{{" }} qr_code }}" width="60"&gt;
+&lt;/div&gt;</code></pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold mb-2">Centered Ticket</h3>
+                        <div class="mockup-code text-xs">
+                            <pre><code>&lt;style&gt;
+  @page { size: A5; margin: 1cm; }
+  .ticket {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 30px;
+    border: 2px solid #333;
+    text-align: center;
+  }
+&lt;/style&gt;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Back to Top -->
+    <div class="text-center mt-8">
+        <a href="#" class="btn btn-primary">Back to Top ↑</a>
+    </div>
+</div>
+{% endblock %}

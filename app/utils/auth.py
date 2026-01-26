@@ -124,3 +124,35 @@ def super_admin_required(f):
         return f(*args, **kwargs)
     
     return decorated_function
+
+
+def permission_required_html(*permissions):
+    """Decorator to require specific permissions for HTML pages (redirects on failure)"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            user = get_current_user()
+
+            # Redirect to login if not authenticated
+            if not user:
+                return redirect(url_for('frontend.login', next=request.url))
+
+            # Super admin bypasses all permission checks
+            if user.is_super_admin:
+                g.current_user = user
+                return f(*args, **kwargs)
+
+            # Check permissions
+            if not user.has_any_permission(permissions):
+                # Redirect to a "no permission" page or back to dashboard
+                from flask import render_template
+                return render_template('errors/403.html',
+                                     message='You do not have permission to access this page.',
+                                     required_permissions=permissions), 403
+
+            g.current_user = user
+            return f(*args, **kwargs)
+
+        return decorated_function
+    return decorator
+

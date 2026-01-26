@@ -5,7 +5,6 @@ from flask import Blueprint, request, jsonify
 from app.models import db
 from app.models.events import Event, Participant, Team
 from app.utils.auth import permission_required
-import uuid
 
 bp = Blueprint('participants', __name__, url_prefix='/api/participants')
 
@@ -33,7 +32,6 @@ def create_participant():
         team_id=data.get('team_id'),
         name=data['name'],
         email=data['email'],
-        t_shirt_size=data.get('t_shirt_size'),
         custom_data=data.get('custom_data')
     )
     
@@ -83,7 +81,7 @@ def list_participants():
         'attendance_status': p.attendance_status,
         'attended_at': p.attended_at.isoformat() if p.attended_at else None,
         'unique_url_uuid': str(p.unique_url_uuid),
-        't_shirt_size': p.t_shirt_size
+        'custom_data': p.custom_data
     } for p in participants])
 
 
@@ -101,8 +99,6 @@ def update_participant(participant_id):
         participant.name = data['name']
     if 'email' in data:
         participant.email = data['email']
-    if 't_shirt_size' in data:
-        participant.t_shirt_size = data['t_shirt_size']
     if 'custom_data' in data:
         participant.custom_data = data['custom_data']
     if 'team_id' in data:

@@ -1,9 +1,11 @@
 """
 Frontend template routes
 """
-from flask import Blueprint, render_template, request, current_app
+from flask import Blueprint, render_template, request, current_app, make_response
+import csv
+import io
 from app.models.events import Participant, Event
-from app.utils.auth import admin_required
+from app.utils.auth import admin_required, permission_required_html
 
 bp = Blueprint('frontend', __name__)
 
@@ -53,6 +55,66 @@ def test_supabase():
 def event_configuration(event_id):
     """Event configuration page for custom fields and schedule"""
     return render_template('admin/event_config.html', event_id=str(event_id))
+
+
+@bp.route('/admin/events/<uuid:event_id>/csv-template')
+@admin_required
+def download_csv_template(event_id):
+    """Download CSV template with custom fields for an event"""
+    event = Event.query.get_or_404(event_id)
+
+    # Standard columns based on event mode (t_shirt_size is now a custom field)
+    if event.mode == 'team':
+        headers = ['team_id', 'team_name', 'member_name', 'member_email']
+    else:  # solo
+        headers = ['participant_name', 'participant_email']
+
+    # Add custom field columns
+    if event.custom_fields:
+        custom_field_names = [field['name'] for field in event.custom_fields if 'name' in field]
+        headers.extend(custom_field_names)
+
+    # Create CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(headers)
+
+    # Add example row with comments
+    if event.mode == 'team':
+        example_row = ['TEAM001', 'Team Alpha', 'John Doe', 'john@example.com']
+    else:
+        example_row = ['John Doe', 'john@example.com']
+
+    # Add example values for custom fields
+    if event.custom_fields:
+        for field in event.custom_fields:
+            if 'name' not in field:
+                continue
+            field_type = field.get('type', 'text')
+
+            # Add example based on field type
+            if field_type == 'select' and field.get('options'):
+                # Use first option as example
+                options = [opt.strip() for opt in field['options'].split(',')]
+                example_row.append(options[0] if options else '')
+            elif field_type == 'checkbox':
+                example_row.append('Yes')
+            elif field_type == 'email':
+                example_row.append('example@email.com')
+            elif field_type == 'number':
+                example_row.append('123')
+            else:
+                example_row.append(f"Sample {field.get('label', field['name'])}")
+
+    writer.writerow(example_row)
+
+    # Return as download
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = f'attachment; filename=event_{event.name.replace(" ", "_")}_template.csv'
+
+    return response
+
 
 # Debug route for testing logout functionality
 @bp.route('/test-logout')
@@ -127,9 +189,25 @@ def admin_settings():
 
 @bp.route('/admin/ticket-designer')
 @admin_required
+@permission_required_html('ticket.create')
 def admin_ticket_designer():
-    """Ticket designer page"""
+    """Ticket designer page - requires ticket.create permission"""
     return render_template('admin/ticket_designer.html', config=get_supabase_config())
+
+
+@bp.route('/admin/token-designer')
+@admin_required
+@permission_required_html('token.create')
+def admin_token_designer():
+    """Token/Badge designer page - requires token.create permission"""
+    return render_template('admin/token_designer.html', config=get_supabase_config())
+
+
+@bp.route('/admin/css-guide')
+@admin_required
+def admin_css_guide():
+    """CSS Guide page for designers - accessible to all admins"""
+    return render_template('admin/css_guide.html', config=get_supabase_config())
 
 
 @bp.route('/accept-invitation')

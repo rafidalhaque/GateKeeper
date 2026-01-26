@@ -5,39 +5,104 @@ API documentation specification using OpenAPI 3.0
 SWAGGER_SPEC = {
     "openapi": "3.0.0",
     "info": {
-        "title": "GateKeeper Event Management API",
+        "title": "🎫 GateKeeper Event Management API",
         "description": """
-# GateKeeper API Documentation
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; color: white; margin-bottom: 20px;">
+    <h1 style="margin: 0; font-size: 28px;">Welcome to GateKeeper API</h1>
+    <p style="margin: 10px 0 0 0; opacity: 0.9;">A comprehensive event management system with participant tracking, team management, and check-in functionality.</p>
+</div>
 
-A comprehensive event management system with participant tracking, team management, and check-in functionality.
+## 🚀 Quick Start
 
-## Authentication
+1. **Authenticate**: Get your access token using `/auth/login`
+2. **Create Event**: POST to `/api/events` to create a new event
+3. **Add Participants**: Import participants via CSV or add individually
+4. **Generate Tickets**: Create QR code tickets for participants
+5. **Check-in**: Use `/api/checkin/confirm` to check in participants
+
+## 🔐 Authentication
 
 Most endpoints require authentication using Supabase JWT tokens. Include the token in the Authorization header:
 
-```
+```http
 Authorization: Bearer <your-jwt-token>
 ```
 
-## Features
+Get your token by calling the `/auth/login` endpoint with your credentials.
 
-- **Event Management**: Create, update, and manage events
-- **Participant Management**: Handle event participants and registrations
-- **Team Management**: Organize participants into teams
-- **Check-in System**: Real-time participant check-in tracking
-- **Ticket Generation**: Unique QR code tickets for participants
-- **Email Notifications**: Automated email delivery system
-- **CSV Import/Export**: Bulk participant management
-- **Reports**: Generate event statistics and reports
+## ✨ Core Features
 
-## Rate Limiting
+### 📅 Event Management
+Create, update, and manage events with custom fields, schedules, and configurations.
 
-API endpoints are rate-limited to prevent abuse. Contact the administrator if you need higher limits.
+### 👥 Participant Management
+Handle event participants, registrations, and bulk imports via CSV.
+
+### 🤝 Team Management
+Organize participants into teams for collaborative events and competitions.
+
+### ✅ Check-in System
+Real-time participant check-in tracking with QR code scanning support.
+
+### 🎟️ Ticket Generation
+Generate unique QR code tickets and badges for participants with custom templates.
+
+### 📧 Email Notifications
+Automated email delivery system with customizable templates.
+
+### 📊 Reports & Analytics
+Generate comprehensive event statistics, attendance reports, and insights.
+
+### 📥 CSV Import/Export
+Bulk participant management with support for custom fields.
+
+## 📚 API Sections
+
+- **Authentication**: User login and session management
+- **Events**: CRUD operations for events
+- **Participants**: Participant registration and management
+- **Teams**: Team creation and member management
+- **Check-in**: Real-time attendance tracking
+- **Tickets**: Ticket and badge generation
+- **Emails**: Email template management and delivery
+- **Reports**: Statistics and analytics endpoints
+- **Admin**: Administrative operations
+
+## 🎯 Best Practices
+
+- Always validate input data before sending requests
+- Use pagination for large datasets
+- Cache responses when appropriate
+- Handle errors gracefully with proper status codes
+- Keep your authentication tokens secure
+
+## ⚡ Rate Limiting
+
+API endpoints are rate-limited to ensure fair usage:
+- **Standard**: 100 requests per minute
+- **Authenticated**: 1000 requests per minute
+
+Contact the administrator if you need higher limits.
+
+## 🆘 Need Help?
+
+- **Documentation**: Visit `/admin/settings` for guides
+- **Support**: Contact support@gatekeeper.com
+- **GitHub**: Report issues on our repository
+
+<div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 4px;">
+    <strong>💡 Pro Tip:</strong> Use the "Try it out" feature below to test endpoints directly from this documentation!
+</div>
         """,
         "version": "1.0.0",
         "contact": {
-            "name": "GateKeeper Support",
-            "email": "support@gatekeeper.com"
+            "name": "GateKeeper Support Team",
+            "email": "support@gatekeeper.com",
+            "url": "https://github.com/gatekeeper/support"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
         }
     },
     "servers": [
@@ -56,16 +121,58 @@ API endpoints are rate-limited to prevent abuse. Contact the administrator if yo
         }
     ],
     "tags": [
-        {"name": "Authentication", "description": "User authentication and authorization"},
-        {"name": "Events", "description": "Event management operations"},
-        {"name": "Participants", "description": "Participant management operations"},
-        {"name": "Teams", "description": "Team management operations"},
-        {"name": "Check-in", "description": "Participant check-in operations"},
-        {"name": "Tickets", "description": "Ticket generation and management"},
-        {"name": "Emails", "description": "Email notification system"},
-        {"name": "Reports", "description": "Event statistics and reports"},
-        {"name": "CSV Import", "description": "Bulk data import operations"},
-        {"name": "Admin", "description": "Admin panel operations"}
+        {
+            "name": "Authentication",
+            "description": "🔐 User authentication and session management using Supabase JWT tokens"
+        },
+        {
+            "name": "Events",
+            "description": "📅 Create, read, update, and delete events with custom fields and schedules"
+        },
+        {
+            "name": "Participants",
+            "description": "👥 Manage event participants, registrations, and bulk imports"
+        },
+        {
+            "name": "Teams",
+            "description": "🤝 Organize participants into teams for collaborative events"
+        },
+        {
+            "name": "Check-in",
+            "description": "✅ Real-time participant check-in tracking with QR code support"
+        },
+        {
+            "name": "Tickets",
+            "description": "🎟️ Generate unique QR code tickets and badges with custom templates"
+        },
+        {
+            "name": "Emails",
+            "description": "📧 Email template management and automated notification delivery"
+        },
+        {
+            "name": "Reports",
+            "description": "📊 Generate event statistics, attendance reports, and analytics"
+        },
+        {
+            "name": "CSV Import",
+            "description": "📥 Bulk data import operations with custom field support"
+        },
+        {
+            "name": "Admin",
+            "description": "⚙️ Administrative operations and system management"
+        },
+        {
+            "name": "Tokens",
+            "description": "🆔 Generate and manage access tokens/badges for participants"
+        },
+        {
+            "name": "SMTP",
+            "description": "📮 SMTP configuration and email delivery settings"
+        },
+        {
+            "name": "Stats",
+            "description": "📈 Dashboard statistics and real-time metrics"
+        }
     ],
     "paths": {
         "/auth/login": {

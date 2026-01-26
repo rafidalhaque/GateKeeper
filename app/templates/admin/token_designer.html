@@ -1,0 +1,537 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Token Designer{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Ensure textareas have proper scrolling and are resizable */
+    textarea.token-editor {
+        overflow-y: auto !important;
+        resize: vertical !important;
+        min-height: 400px;
+    }
+
+    /* Ensure preview container is scrollable */
+    .preview-container {
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+    }
+
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Make sure the page itself is scrollable */
+    .drawer-content {
+        overflow-y: auto;
+        height: 100vh;
+    }
+
+    /* Equal height cards for side-by-side layout */
+    @media (min-width: 1024px) {
+        .grid.lg\\:grid-cols-2 > .card {
+            height: 100%;
+        }
+
+        .grid.lg\\:grid-cols-2 > .card .card-body {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .grid.lg\\:grid-cols-2 > .card .preview-container,
+        .grid.lg\\:grid-cols-2 > .card textarea.token-editor {
+            flex: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="tokenDesigner()">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">Token Design Playground</h1>
+            <p class="text-base-content/70 mt-1">Design custom access token templates with HTML & CSS</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/admin/css-guide" target="_blank" class="btn btn-ghost btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                </svg>
+                CSS Guide
+            </a>
+            <button @click="loadTemplate()" class="btn btn-secondary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Load Template
+            </button>
+            <button @click="resetToDefault()" class="btn btn-ghost btn-sm">Reset to Default</button>
+            <button @click="previewToken()" class="btn btn-primary btn-sm" :disabled="loading">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Preview
+            </button>
+            <button @click="saveTemplate()" class="btn btn-success btn-sm" :disabled="loading || !selectedEventId">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Save Template
+            </button>
+        </div>
+    </div>
+
+    <!-- Event Selector -->
+    <div class="card bg-base-200 mb-4">
+        <div class="card-body">
+            <div class="flex gap-4 items-end">
+                <div class="form-control flex-1">
+                    <label class="label">
+                        <span class="label-text font-semibold">Select Event</span>
+                    </label>
+                    <select x-model="selectedEventId" @change="loadEventTemplate()" class="select select-bordered w-full">
+                        <option value="">Choose an event...</option>
+                        <template x-for="event in events" :key="event.id">
+                            <option :value="event.id" x-text="`${event.name} - ${event.date}`"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="form-control flex-1">
+                    <label class="label">
+                        <span class="label-text font-semibold">Sample Participant (for preview)</span>
+                    </label>
+                    <select x-model="selectedParticipantId" class="select select-bordered w-full">
+                        <option value="">Sample data</option>
+                        <template x-for="participant in participants" :key="participant.id">
+                            <option :value="participant.id" x-text="participant.name"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Placeholders -->
+    <div class="alert alert-info mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div>
+            <h4 class="font-bold">Available Placeholders (Jinja2)</h4>
+            <p class="text-sm">
+                <code>{{ "{{" }} participant_name }}</code>,
+                <code>{{ "{{" }} email }}</code>,
+                <code>{{ "{{" }} participant_uuid }}</code>,
+                <code>{{ "{{" }} event_name }}</code>,
+                <code>{{ "{{" }} event_date }}</code>,
+                <code>{{ "{{" }} venue }}</code>,
+                <code>{{ "{{" }} qr_code }}</code>,
+                <code>{{ "{{" }} team_name }}</code>,
+                <code>{{ "{{" }} team_id }}</code>,
+                <code>{{ "{{" }} custom_fields.field_name }}</code>
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Editor and Preview -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- HTML Editor -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">HTML Template (with inline CSS)</h2>
+                <textarea
+                    x-model="htmlTemplate"
+                    @input="debouncedPreview()"
+                    class="textarea textarea-bordered token-editor font-mono text-sm"
+                    placeholder="Enter HTML here...">
+                </textarea>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Live Preview</h2>
+                <div class="preview-container border border-base-300 rounded-lg p-4 bg-white min-h-[400px]" x-html="previewHtml"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Library Modal -->
+    <div x-show="showTemplatesModal" class="modal modal-open" @click.self="showTemplatesModal = false">
+        <div class="modal-box max-w-4xl">
+            <h3 class="font-bold text-lg mb-4">Template Library</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <template x-for="template in templateLibrary" :key="template.id">
+                    <div class="card bg-base-200 cursor-pointer hover:shadow-lg transition-shadow" @click="applyTemplate(template)">
+                        <div class="card-body">
+                            <h4 class="card-title text-base" x-text="template.name"></h4>
+                            <p class="text-sm opacity-70" x-text="template.description"></p>
+                            <div class="card-actions justify-end">
+                                <button class="btn btn-primary btn-sm">Use Template</button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="modal-action">
+                <button class="btn" @click="showTemplatesModal = false">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function tokenDesigner() {
+    return {
+        loading: false,
+        events: [],
+        participants: [],
+        selectedEventId: '',
+        selectedParticipantId: '',
+        htmlTemplate: '',
+        previewHtml: '',
+        showTemplatesModal: false,
+        templateLibrary: [],
+        debounceTimer: null,
+
+        async init() {
+            await this.loadEvents();
+            this.loadTemplateLibrary();
+            this.resetToDefault();
+        },
+
+        async loadEvents() {
+            try {
+                const response = await authFetch('/api/events');
+                if (response.ok) {
+                    this.events = await response.json();
+                }
+            } catch (error) {
+                console.error('Failed to load events:', error);
+            }
+        },
+
+        async loadEventTemplate() {
+            if (!this.selectedEventId) return;
+
+            try {
+                const response = await authFetch(`/api/events/${this.selectedEventId}`);
+                if (response.ok) {
+                    const event = await response.json();
+                    if (event.token_template_html) {
+                        this.htmlTemplate = event.token_template_html;
+                    }
+                }
+
+                await this.loadParticipants();
+                this.previewToken();
+            } catch (error) {
+                console.error('Failed to load event template:', error);
+            }
+        },
+
+        async loadParticipants() {
+            if (!this.selectedEventId) return;
+
+            try {
+                const response = await authFetch(`/api/participants?event_id=${this.selectedEventId}&limit=10`);
+                if (response.ok) {
+                    this.participants = await response.json();
+                    if (this.participants.length > 0 && !this.selectedParticipantId) {
+                        this.selectedParticipantId = this.participants[0].id;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load participants:', error);
+            }
+        },
+
+        async previewToken() {
+            if (!this.selectedEventId) return;
+
+            this.loading = true;
+
+            try {
+                const response = await authFetch('/api/tokens/preview', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        event_id: this.selectedEventId,
+                        participant_id: this.selectedParticipantId || null,
+                        html_template: this.htmlTemplate
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.previewHtml = data.html;
+                }
+            } catch (error) {
+                console.error('Preview error:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        debouncedPreview() {
+            clearTimeout(this.debounceTimer);
+            this.debounceTimer = setTimeout(() => {
+                if (this.selectedEventId) {
+                    this.previewToken();
+                }
+            }, 500);
+        },
+
+        async saveTemplate() {
+            if (!this.selectedEventId) {
+                showAlert('Please select an event first', 'error');
+                return;
+            }
+
+            this.loading = true;
+
+            try {
+                const response = await authFetch(`/api/events/${this.selectedEventId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        token_template_html: this.htmlTemplate
+                    })
+                });
+
+                if (response.ok) {
+                    showAlert('Token template saved successfully!', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert('Save failed: ' + (error.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save template', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        resetToDefault() {
+            this.htmlTemplate = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        /* Token/Badge Design - Typically smaller than tickets */
+        @page {
+            size: 3.5in 2in;  /* Standard badge size */
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .token {
+            width: 3.5in;
+            height: 2in;
+            padding: 15px;
+            box-sizing: border-box;
+            border: 2px solid #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .content {
+            text-align: center;
+        }
+
+        .content .name {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0 5px;
+        }
+
+        .content .team {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .qr-section {
+            text-align: center;
+        }
+
+        .qr-section img {
+            width: 60px;
+            height: 60px;
+            background: white;
+            padding: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="token">
+        <div class="header">
+            <h1>{{ event_name }}</h1>
+        </div>
+
+        <div class="content">
+            <div class="name">{{ participant_name }}</div>
+            {% if team_name %}
+            <div class="team">{{ team_name }}</div>
+            {% endif %}
+        </div>
+
+        <div class="qr-section">
+            <img src="{{ qr_code }}" alt="QR Code">
+        </div>
+    </div>
+</body>
+</html>`;
+        },
+
+        loadTemplate() {
+            this.showTemplatesModal = true;
+        },
+
+        loadTemplateLibrary() {
+            this.templateLibrary = [
+                {
+                    id: 'default',
+                    name: 'Default Badge',
+                    description: 'Standard badge with gradient background',
+                    html: this.htmlTemplate
+                },
+                {
+                    id: 'minimal',
+                    name: 'Minimal White',
+                    description: 'Clean white badge with simple design',
+                    html: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page { size: 3.5in 2in; margin: 0; }
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        .token {
+            width: 3.5in;
+            height: 2in;
+            padding: 20px;
+            box-sizing: border-box;
+            border: 1px solid #000;
+            background: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        h1 { margin: 0; font-size: 14px; text-transform: uppercase; color: #333; }
+        .name { font-size: 22px; font-weight: bold; margin: 15px 0; }
+        .qr-section img { width: 50px; }
+    </style>
+</head>
+<body>
+    <div class="token">
+        <h1>{{ event_name }}</h1>
+        <div class="name">{{ participant_name }}</div>
+        <div class="qr-section">
+            <img src="{{ qr_code }}">
+        </div>
+    </div>
+</body>
+</html>`
+                },
+                {
+                    id: 'modern',
+                    name: 'Modern Dark',
+                    description: 'Sleek dark design with accent color',
+                    html: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page { size: 3.5in 2in; margin: 0; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        .token {
+            width: 3.5in;
+            height: 2in;
+            padding: 15px;
+            box-sizing: border-box;
+            background: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .header {
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 5px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 14px;
+            color: #00ff88;
+            text-transform: uppercase;
+        }
+        .content { flex: 1; display: flex; align-items: center; justify-content: center; }
+        .name { font-size: 24px; font-weight: bold; }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .team { font-size: 11px; color: #aaa; }
+        .qr-section img { width: 50px; background: white; padding: 2px; }
+    </style>
+</head>
+<body>
+    <div class="token">
+        <div class="header">
+            <h1>{{ event_name }}</h1>
+        </div>
+        <div class="content">
+            <div class="name">{{ participant_name }}</div>
+        </div>
+        <div class="footer">
+            <div class="team">{% if team_name %}{{ team_name }}{% else %}&nbsp;{% endif %}</div>
+            <div class="qr-section">
+                <img src="{{ qr_code }}">
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+                }
+            ];
+        },
+
+        applyTemplate(template) {
+            this.htmlTemplate = template.html;
+            this.showTemplatesModal = false;
+            if (this.selectedEventId) {
+                this.previewToken();
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

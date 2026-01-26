@@ -25,7 +25,6 @@ def lookup_participant(unique_uuid):
         'unique_url_uuid': str(participant.unique_url_uuid),
         'name': participant.name,
         'email': participant.email,
-        't_shirt_size': participant.t_shirt_size,
         'custom_data': participant.custom_data,
         'attendance_status': participant.attendance_status,
         'attended_at': participant.attended_at.isoformat() if participant.attended_at else None,

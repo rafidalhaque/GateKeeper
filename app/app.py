@@ -36,6 +36,7 @@ def create_app(config_name='default'):
     from app.routes import teams as teams_bp
     from app.routes import checkin as checkin_bp
     from app.routes import tickets as tickets_bp
+    from app.routes import tokens as tokens_bp
     from app.routes import emails as emails_bp
     from app.routes import admin as admin_bp
     from app.routes import reports as reports_bp
@@ -53,6 +54,7 @@ def create_app(config_name='default'):
     app.register_blueprint(teams_bp.bp)
     app.register_blueprint(checkin_bp.bp)
     app.register_blueprint(tickets_bp.bp)
+    app.register_blueprint(tokens_bp.bp)
     app.register_blueprint(emails_bp.bp)
     app.register_blueprint(admin_bp.bp)
     app.register_blueprint(reports_bp.bp)
