@@ -1,11 +1,11 @@
 {% extends "admin/base.html" %}
-{% include 'admin/components/breadcrumb.html' %}
 
 {% block title %}Events Management - GateKeeper Admin{% endblock %}
 {% block page_title %}Events Management{% endblock %}
 
 {% block breadcrumb %}
 {% set breadcrumb_items = [{'name': 'Events'}] %}
+{% include 'admin/components/breadcrumb.html' %}
 {% endblock %}
 
 {% block content %}

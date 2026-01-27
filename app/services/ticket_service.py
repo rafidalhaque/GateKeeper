@@ -80,7 +80,7 @@ def render_ticket_template(event, participant):
         'participant_name': participant.name,
         'email': participant.email,
         'participant_uuid': str(participant.unique_url_uuid),
-        't_shirt_size': participant.t_shirt_size,
+        't_shirt_size': participant.custom_data.get('t-shirt_size') if participant.custom_data else None,
         'qr_code': qr_code,
         'custom_css': f'<style>{event.ticket_template_css}</style>' if event.ticket_template_css else ''
     }
@@ -213,7 +213,7 @@ def render_ticket_preview(event, participant=None, custom_html=None, custom_css=
         'participant_name': participant.name,
         'email': participant.email,
         'participant_uuid': str(participant.unique_url_uuid),
-        't_shirt_size': participant.t_shirt_size,
+        't_shirt_size': participant.custom_data.get('t_shirt_size') if hasattr(participant, 'custom_data') and participant.custom_data else getattr(participant, 't_shirt_size', None),
         'qr_code': qr_code,
         'custom_css': f'<style>{custom_css or event.ticket_template_css or ""}</style>'
     }

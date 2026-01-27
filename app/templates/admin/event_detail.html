@@ -5,8 +5,8 @@
 
 {% block breadcrumb %}
 {% set breadcrumb_items = [{'name': 'Events', 'url': '/admin/events'}, {'name': 'Event Details'}] %}
-{% endblock %}
 {% include 'admin/components/breadcrumb.html' %}
+{% endblock %}
 
 {% block content %}
 <div x-data="eventDetail('{{ event_id }}')" x-init="loadEvent()">

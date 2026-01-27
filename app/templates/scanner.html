@@ -127,6 +127,18 @@
                                     <p class="text-lg mt-1" x-text="participantData.t_shirt_size"></p>
                                 </div>
                             </template>
+
+                            <!-- Custom Data -->
+                            <template x-if="participantData.custom_data">
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <template x-for="(value, key) in participantData.custom_data" :key="key">
+                                        <div>
+                                            <label class="text-sm font-semibold text-base-content/70 capitalize" x-text="key.replace(/_/g, ' ')"></label>
+                                            <p class="text-lg mt-1" x-text="value"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
                             
                             <div class="divider"></div>
                             
@@ -330,12 +342,10 @@ function qrScanner() {
                     this.participantData.attendance_status = true;
                     this.participantData.attended_at = result.attended_at;
 
-                    // Clear participant data after 3 seconds in quick scan mode
-                    if (this.quickScanMode) {
-                        setTimeout(() => {
-                            this.participantData = null;
-                        }, 3000);
-                    }
+
+                    // In quick scan mode, we keep the data visible until the next scan
+                    // Duplicate scans of the same UUID are prevented by the handleQRCode check
+
                 } else {
                     const error = await response.json();
                     console.error('Check-in error:', error);
