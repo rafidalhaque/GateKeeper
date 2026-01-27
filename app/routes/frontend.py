@@ -21,7 +21,7 @@ def get_supabase_config():
 @bp.route('/')
 def index():
     """Home page"""
-    return render_template('base.html', show_nav=True)
+    return render_template('index.html')
 
 
 @bp.route('/ticket/<uuid:unique_uuid>')
