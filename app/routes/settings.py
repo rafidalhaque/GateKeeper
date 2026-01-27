@@ -149,3 +149,54 @@ def update_token_printing():
         'message': 'Token printing setting updated successfully',
         'enabled': data['enabled']
     })
+
+
+@bp.route('/theme', methods=['GET'])
+@admin_required
+def get_theme_preference():
+    """Get current user's theme preference"""
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({'error': 'User not authenticated'}), 401
+    
+    # Get user-specific theme preference
+    theme_key = f'user_theme_{current_user.id}'
+    theme = AppSettings.get(theme_key, 'light')
+    
+    return jsonify({
+        'theme': theme
+    })
+
+
+@bp.route('/theme', methods=['PUT'])
+@admin_required
+def update_theme_preference():
+    """Update current user's theme preference"""
+    data = request.get_json()
+    
+    if 'theme' not in data:
+        return jsonify({'error': 'Missing required field: theme'}), 400
+    
+    theme = data['theme']
+    if theme not in ['light', 'dark']:
+        return jsonify({'error': 'Theme must be either "light" or "dark"'}), 400
+    
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({'error': 'User not authenticated'}), 401
+    
+    # Store user-specific theme preference
+    theme_key = f'user_theme_{current_user.id}'
+    setting = AppSettings.set(
+        key=theme_key,
+        value=theme,
+        description=f'Theme preference for user {current_user.email}',
+        updated_by=current_user.id
+    )
+    
+    return jsonify({
+        'message': 'Theme preference updated successfully',
+        'theme': theme
+    })

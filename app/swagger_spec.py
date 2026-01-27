@@ -172,6 +172,10 @@ Contact the administrator if you need higher limits.
         {
             "name": "Stats",
             "description": "📈 Dashboard statistics and real-time metrics"
+        },
+        {
+            "name": "Settings",
+            "description": "⚙️ Application settings and user preferences"
         }
     ],
     "paths": {
@@ -666,6 +670,477 @@ Contact the administrator if you need higher limits.
                 "responses": {
                     "200": {"description": "Import successful"},
                     "400": {"description": "Invalid file format"}
+                }
+            }
+        },
+        "/api/checkin/lookup/<uuid>": {
+            "get": {
+                "tags": ["Check-in"],
+                "summary": "Lookup participant by UUID",
+                "description": "Get participant information for check-in scanning",
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string", "format": "uuid"}
+                    }
+                ],
+                "responses": {
+                    "200": {"description": "Participant found"},
+                    "404": {"description": "Participant not found"}
+                }
+            }
+        },
+        "/api/checkin/confirm": {
+            "post": {
+                "tags": ["Check-in"],
+                "summary": "Confirm participant check-in",
+                "description": "Mark participant as checked in",
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["unique_url_uuid"],
+                                "properties": {
+                                    "unique_url_uuid": {"type": "string", "format": "uuid"},
+                                    "event_passcode": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {"description": "Check-in successful"},
+                    "400": {"description": "Invalid passcode or already checked in"},
+                    "404": {"description": "Participant not found"}
+                }
+            }
+        },
+        "/api/checkin/logs": {
+            "get": {
+                "tags": ["Check-in"],
+                "summary": "Get check-in logs",
+                "description": "Retrieve check-in audit logs for an event",
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "event_id",
+                        "in": "query",
+                        "schema": {"type": "string", "format": "uuid"}
+                    }
+                ],
+                "responses": {
+                    "200": {"description": "Check-in logs retrieved"}
+                }
+            }
+        },
+        "/api/settings": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "Get all settings",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Settings retrieved"}
+                }
+            },
+            "post": {
+                "tags": ["Admin"],
+                "summary": "Create setting",
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["key", "value"],
+                                "properties": {
+                                    "key": {"type": "string"},
+                                    "value": {"type": "string"},
+                                    "description": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {"description": "Setting created"}
+                }
+            }
+        },
+        "/api/settings/<key>": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "Get setting by key",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Setting retrieved"}
+                }
+            },
+            "put": {
+                "tags": ["Admin"],
+                "summary": "Update setting",
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["value"],
+                                "properties": {
+                                    "value": {"type": "string"},
+                                    "description": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {"description": "Setting updated"}
+                }
+            },
+            "delete": {
+                "tags": ["Admin"],
+                "summary": "Delete setting",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Setting deleted"}
+                }
+            }
+        },
+        "/api/settings/theme": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "Get user theme preference",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Theme preference",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "theme": {"type": "string", "enum": ["light", "dark"]}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": ["Admin"],
+                "summary": "Update user theme preference",
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["theme"],
+                                "properties": {
+                                    "theme": {"type": "string", "enum": ["light", "dark"]}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {"description": "Theme preference updated"}
+                }
+            }
+        },
+        "/api/settings/token-printing": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "Get token printing status",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Token printing status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {"type": "boolean"}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": ["Admin"],
+                "summary": "Update token printing setting",
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["enabled"],
+                                "properties": {
+                                    "enabled": {"type": "boolean"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {"description": "Token printing setting updated"}
+                }
+            }
+        },
+        "/api/jobs": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "List all jobs",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Jobs list"}
+                }
+            }
+        },
+        "/api/jobs/<task_id>": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "Get job status",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Job status"}
+                }
+            },
+            "delete": {
+                "tags": ["Admin"],
+                "summary": "Delete job",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Job deleted"}
+                }
+            }
+        },
+        "/api/jobs/active": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "Get active jobs",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Active jobs"}
+                }
+            }
+        },
+        "/api/jobs/stats": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "Get job statistics",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Job statistics"}
+                }
+            }
+        },
+        "/api/stats/dashboard": {
+            "get": {
+                "tags": ["Stats"],
+                "summary": "Get dashboard statistics",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Dashboard stats"}
+                }
+            }
+        },
+        "/api/stats/event/<event_id>": {
+            "get": {
+                "tags": ["Stats"],
+                "summary": "Get event statistics",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Event stats"}
+                }
+            }
+        },
+        "/api/smtp/config": {
+            "get": {
+                "tags": ["SMTP"],
+                "summary": "Get SMTP configuration",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "SMTP config"}
+                }
+            },
+            "post": {
+                "tags": ["SMTP"],
+                "summary": "Create SMTP configuration",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "201": {"description": "SMTP config created"}
+                }
+            }
+        },
+        "/api/smtp/config/test": {
+            "post": {
+                "tags": ["SMTP"],
+                "summary": "Test SMTP configuration",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "SMTP test result"}
+                }
+            }
+        },
+        "/api/email-templates": {
+            "get": {
+                "tags": ["Emails"],
+                "summary": "List email templates",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Email templates"}
+                }
+            },
+            "post": {
+                "tags": ["Emails"],
+                "summary": "Create email template",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "201": {"description": "Template created"}
+                }
+            }
+        },
+        "/api/email-templates/<template_id>": {
+            "get": {
+                "tags": ["Emails"],
+                "summary": "Get email template",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Email template"}
+                }
+            },
+            "put": {
+                "tags": ["Emails"],
+                "summary": "Update email template",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Template updated"}
+                }
+            },
+            "delete": {
+                "tags": ["Emails"],
+                "summary": "Delete email template",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Template deleted"}
+                }
+            }
+        },
+        "/api/invitations": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "List invitations",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Invitations list"}
+                }
+            },
+            "post": {
+                "tags": ["Admin"],
+                "summary": "Create invitation",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "201": {"description": "Invitation created"}
+                }
+            }
+        },
+        "/api/invitations/<invitation_id>": {
+            "delete": {
+                "tags": ["Admin"],
+                "summary": "Delete invitation",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Invitation deleted"}
+                }
+            }
+        },
+        "/api/admin/roles": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "List roles",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Roles list"}
+                }
+            },
+            "post": {
+                "tags": ["Admin"],
+                "summary": "Create role",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "201": {"description": "Role created"}
+                }
+            }
+        },
+        "/api/admin/roles/<role_id>": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "Get role",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Role details"}
+                }
+            },
+            "put": {
+                "tags": ["Admin"],
+                "summary": "Update role",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Role updated"}
+                }
+            },
+            "delete": {
+                "tags": ["Admin"],
+                "summary": "Delete role",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Role deleted"}
+                }
+            }
+        },
+        "/api/admin/permissions": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "List permissions",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Permissions list"}
+                }
+            }
+        },
+        "/api/admin/users": {
+            "get": {
+                "tags": ["Admin"],
+                "summary": "List admin users",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Users list"}
+                }
+            }
+        },
+        "/api/admin/users/<user_id>/assign-role": {
+            "post": {
+                "tags": ["Admin"],
+                "summary": "Assign role to user",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Role assigned"}
                 }
             }
         }
