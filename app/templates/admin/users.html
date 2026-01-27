@@ -514,7 +514,21 @@ function usersManager() {
                     await this.fetchData();
                 } else {
                     const error = await response.json();
-                    showAlert(error.error || 'Error creating invitation', 'error');
+                    let errorMessage = error.error || 'Error creating invitation';
+
+                    // Special handling for Supabase configuration errors
+                    if (errorMessage.includes('Supabase configuration') || errorMessage.includes('SUPABASE_SERVICE_KEY')) {
+                        errorMessage = '⚠️ Supabase Service Key Not Configured\n\n' +
+                            'The invitation system requires a Supabase service role key.\n\n' +
+                            'Setup instructions:\n' +
+                            '1. Go to Supabase Dashboard → Settings → API\n' +
+                            '2. Copy the "service_role" key (secret)\n' +
+                            '3. Add it to your .env file as SUPABASE_SERVICE_KEY\n' +
+                            '4. Restart the Flask application\n\n' +
+                            'See SUPABASE_SERVICE_KEY_SETUP.md for detailed instructions.';
+                    }
+
+                    showAlert(errorMessage, 'error');
                 }
             } catch (error) {
                 console.error('Error sending invitation:', error);

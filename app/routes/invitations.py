@@ -20,7 +20,17 @@ def create_supabase_user(email, name):
     supabase_service_key = current_app.config.get('SUPABASE_SERVICE_KEY')
 
     if not supabase_url or not supabase_service_key:
-        raise Exception('Supabase configuration not found')
+        raise Exception(
+            'Supabase configuration not found. Please set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file. '
+            'See SUPABASE_SERVICE_KEY_SETUP.md for instructions.'
+        )
+
+    # Check if service key is still the placeholder
+    if supabase_service_key == 'YOUR_SERVICE_ROLE_KEY_HERE':
+        raise Exception(
+            'SUPABASE_SERVICE_KEY is not configured. Please replace YOUR_SERVICE_ROLE_KEY_HERE with your actual '
+            'service role key from Supabase dashboard. See SUPABASE_SERVICE_KEY_SETUP.md for instructions.'
+        )
 
     # Create user in Supabase
     headers = {
@@ -224,6 +234,12 @@ def accept_invitation():
 
         supabase_url = current_app.config.get('SUPABASE_URL')
         supabase_service_key = current_app.config.get('SUPABASE_SERVICE_KEY')
+
+        if not supabase_url or not supabase_service_key or supabase_service_key == 'YOUR_SERVICE_ROLE_KEY_HERE':
+            raise Exception(
+                'Supabase configuration not found. Please configure SUPABASE_SERVICE_KEY. '
+                'See SUPABASE_SERVICE_KEY_SETUP.md for instructions.'
+            )
 
         headers = {
             'apikey': supabase_service_key,
