@@ -10,6 +10,9 @@
 
 {% block content %}
 <div x-data="qrScanner()">
+    <!-- Hidden iframe for printing -->
+    <iframe id="print-frame" style="position: absolute; width: 0; height: 0; border: none; visibility: hidden;"></iframe>
+
     <!-- Scanner Controls -->
     <div class="card bg-base-100 shadow-xl mb-4">
         <div class="card-body">
@@ -342,6 +345,36 @@ function qrScanner() {
                     this.participantData.attendance_status = true;
                     this.participantData.attended_at = result.attended_at;
 
+
+                    // Handle auto-printing
+                    console.log('Check-in result:', result);
+                    if (result.should_print) {
+                        console.log('Should print is TRUE. Preparing to print...');
+                        if (result.print_html) {
+                            console.log('Print HTML received. Writing to iframe...');
+                            const printFrame = document.getElementById('print-frame');
+                            const printDoc = printFrame.contentDocument || printFrame.contentWindow.document;
+                            
+                            printDoc.open();
+                            printDoc.write(result.print_html);
+                            printDoc.close();
+                            
+                            // Wait for images to load before printing
+                            console.log('Waiting for content to load...');
+                            setTimeout(() => {
+                                console.log('Calling print()...');
+                                printFrame.contentWindow.focus();
+                                printFrame.contentWindow.print();
+                                showAlert('Printing token...', 'info');
+                            }, 500);
+                        } else {
+                            console.error('should_print is true but print_html is missing!');
+                        }
+                    } else {
+                        console.log('Should print is FALSE.');
+                         // Optional: Inform user that printing was skipped because a teammate already printed
+                         // console.log('Skipped printing: teammate already checked in');
+                    }
 
                     // In quick scan mode, we keep the data visible until the next scan
                     // Duplicate scans of the same UUID are prevented by the handleQRCode check

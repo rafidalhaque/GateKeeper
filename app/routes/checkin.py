@@ -6,6 +6,7 @@ from app.models import db
 from app.models.events import Participant, Event, CheckinLog
 from app.utils.auth import login_required, permission_required, get_current_user
 from datetime import datetime
+from app.services.token_service import render_token_template
 
 bp = Blueprint('checkin', __name__, url_prefix='/api/checkin')
 
@@ -101,11 +102,47 @@ def confirm_checkin():
     db.session.add(checkin_log)
     db.session.commit()
     
+    # Determine if we should print the token
+    should_print = False
+    print_html = None
+    
+    # Logic:
+    # 1. Solo participants always print
+    # 2. Team participants print ONLY if they are the first member to check in
+    
+    if not participant.team_id:
+        # Solo participant
+        should_print = True
+    else:
+        # Team participant - check if any OTHER member of the team is already checked in
+        # We query for other members of the same team who have attendance_status=True
+        # excluding the current participant (who we just marked as true, so we check if count > 1)
+        
+        # Count checked-in members for this team
+        checked_in_count = Participant.query.filter(
+            Participant.team_id == participant.team_id,
+            Participant.attendance_status == True
+        ).count()
+        
+        # If count is 1, it means ONLY the current participant is checked in (so they are the first)
+        if checked_in_count == 1:
+            should_print = True
+            
+    if should_print:
+        try:
+            print_html = render_token_template(event, participant)
+        except Exception as e:
+            # Log error but don't fail the check-in
+            print(f"Error generating token HTML: {e}")
+            should_print = False
+    
     return jsonify({
         'message': 'Check-in successful',
         'participant_id': str(participant.id),
         'name': participant.name,
-        'attended_at': participant.attended_at.isoformat()
+        'attended_at': participant.attended_at.isoformat(),
+        'should_print': should_print,
+        'print_html': print_html
     }), 200
 
 
