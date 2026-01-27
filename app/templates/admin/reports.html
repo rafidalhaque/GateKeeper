@@ -8,6 +8,17 @@
 {% include 'admin/components/breadcrumb.html' %}
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div x-data="reportsManager()" x-init="loadEvents()">
     <!-- Event Selector -->
@@ -38,33 +49,74 @@
     
     <!-- Report Content -->
     <div x-show="!loading && selectedEventId && report">
+        <!-- Event Info Banner -->
+        <div class="alert alert-info mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <h3 class="font-bold" x-text="report.event_name"></h3>
+                <div class="text-sm">
+                    <span x-text="report.event_date ? 'Date: ' + formatDate(report.event_date) : ''"></span>
+                    <span x-show="report.event_venue" class="ml-4">📍 <span x-text="report.event_venue"></span></span>
+                    <span class="ml-4 badge badge-outline" x-text="report.event_mode"></span>
+                </div>
+            </div>
+        </div>
+
         <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="stats shadow">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="stat-card stats shadow bg-gradient-to-br from-primary/10 to-primary/5 hover:shadow-lg">
                 <div class="stat">
+                    <div class="stat-figure text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                        </svg>
+                    </div>
                     <div class="stat-title">Total Participants</div>
                     <div class="stat-value text-primary" x-text="report.total_participants"></div>
+                    <div class="stat-desc">Registered for event</div>
                 </div>
             </div>
             
-            <div class="stats shadow">
+            <div class="stat-card stats shadow bg-gradient-to-br from-success/10 to-success/5 hover:shadow-lg">
                 <div class="stat">
+                    <div class="stat-figure text-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
                     <div class="stat-title">Checked In</div>
                     <div class="stat-value text-success" x-text="report.checked_in"></div>
+                    <div class="stat-desc" x-text="`${report.not_checked_in} not checked in`"></div>
                 </div>
             </div>
             
-            <div class="stats shadow">
+            <div class="stat-card stats shadow bg-gradient-to-br from-warning/10 to-warning/5 hover:shadow-lg">
                 <div class="stat">
+                    <div class="stat-figure text-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        </svg>
+                    </div>
                     <div class="stat-title">Attendance Rate</div>
                     <div class="stat-value" x-text="report.attendance_rate + '%'"></div>
+                    <div class="stat-desc">
+                        <progress class="progress progress-warning w-full" :value="report.attendance_rate" max="100"></progress>
+                    </div>
                 </div>
             </div>
             
-            <div class="stats shadow">
+            <div class="stat-card stats shadow bg-gradient-to-br from-secondary/10 to-secondary/5 hover:shadow-lg" x-show="report.event_mode === 'team'">
                 <div class="stat">
+                    <div class="stat-figure text-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                        </svg>
+                    </div>
                     <div class="stat-title">Teams</div>
                     <div class="stat-value text-secondary" x-text="report.total_teams || 0"></div>
+                    <div class="stat-desc">Total teams registered</div>
                 </div>
             </div>
         </div>
@@ -104,12 +156,26 @@
         </div>
         
         <!-- Check-in Timeline -->
-        <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card bg-base-100 shadow-xl mb-6" x-show="report.recent_checkins && report.recent_checkins.length > 0">
             <div class="card-body">
-                <h2 class="card-title mb-4">Check-in Timeline</h2>
-                <div class="text-center py-8 text-base-content/50">
-                    <p>Check-in timeline visualization would be displayed here</p>
-                    <p class="text-sm">(Chart visualization can be added with Chart.js or similar library)</p>
+                <h2 class="card-title mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                    Check-in Activity
+                </h2>
+                <div class="stats stats-vertical lg:stats-horizontal shadow">
+                    <div class="stat">
+                        <div class="stat-title">Latest Check-in</div>
+                        <div class="stat-value text-sm" x-text="formatDateTime(report.recent_checkins[0].checked_in_at)"></div>
+                        <div class="stat-desc" x-text="report.recent_checkins[0].participant_name"></div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-title">Recent Activity</div>
+                        <div class="stat-value text-primary" x-text="report.recent_checkins.length"></div>
+                        <div class="stat-desc">Last 50 check-ins recorded</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -182,12 +248,16 @@ function reportsManager() {
             if (!this.selectedEventId) return;
             
             this.loading = true;
+            this.report = null;
+
             try {
                 const response = await authFetch(`/api/reports/event/${this.selectedEventId}`);
                 if (response.ok) {
                     this.report = await response.json();
+                    console.log('Report loaded:', this.report);
                 } else {
-                    showAlert('Error loading report', 'error');
+                    const error = await response.json();
+                    showAlert(error.message || 'Error loading report', 'error');
                 }
             } catch (error) {
                 console.error('Error loading report:', error);
@@ -198,6 +268,8 @@ function reportsManager() {
         },
         
         async exportReport() {
+            if (!this.selectedEventId) return;
+
             try {
                 const response = await authFetch(`/api/reports/event/${this.selectedEventId}/export`);
                 if (response.ok) {
@@ -205,11 +277,27 @@ function reportsManager() {
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `report-${this.selectedEventId}.csv`;
+
+                    // Get filename from Content-Disposition header or use default
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = `report-${this.selectedEventId}.csv`;
+                    if (contentDisposition) {
+                        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+
+                    a.download = filename;
+                    document.body.appendChild(a);
                     a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
                     showAlert('Report exported successfully', 'success');
                 } else {
-                    showAlert('Error exporting report', 'error');
+                    const error = await response.json();
+                    showAlert(error.message || 'Error exporting report', 'error');
                 }
             } catch (error) {
                 console.error('Error exporting report:', error);
@@ -218,7 +306,25 @@ function reportsManager() {
         },
         
         formatDateTime(dateString) {
-            return new Date(dateString).toLocaleString('en-US');
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+
+        formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
         }
     };
 }

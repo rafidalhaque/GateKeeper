@@ -210,6 +210,13 @@ def admin_css_guide():
     return render_template('admin/css_guide.html', config=get_supabase_config())
 
 
+@bp.route('/admin/jobs')
+@admin_required
+def admin_jobs():
+    """Background jobs monitoring page - accessible to all admins"""
+    return render_template('admin/jobs.html', config=get_supabase_config())
+
+
 @bp.route('/accept-invitation')
 def accept_invitation():
     """Invitation acceptance page (public)"""

@@ -48,6 +48,7 @@ def create_app(config_name='default'):
     from app.routes import stats as stats_bp
     from app.routes import smtp as smtp_bp
     from app.routes import invitations as invitations_bp
+    from app.routes import jobs as jobs_bp
 
     app.register_blueprint(events_bp.bp)
     app.register_blueprint(participants_bp.bp)
@@ -67,6 +68,7 @@ def create_app(config_name='default'):
     app.register_blueprint(stats_bp.bp)
     app.register_blueprint(smtp_bp.bp)
     app.register_blueprint(invitations_bp.bp)
+    app.register_blueprint(jobs_bp.bp)
 
     # Register CLI commands
     from app.cli import register_commands

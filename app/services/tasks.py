@@ -1,14 +1,14 @@
 """
 Celery background tasks
 """
-from app.celery_app import celery
+from celery import shared_task
 from app.models import db
 from app.models.events import CeleryJob
 from datetime import datetime
 import uuid
 
 
-@celery.task(bind=True)
+@shared_task(bind=True)
 def import_csv_task(self, event_id, csv_content):
     """Background task for CSV import"""
     from app.services.csv_import import process_csv_import
@@ -48,7 +48,7 @@ def import_csv_task(self, event_id, csv_content):
         raise
 
 
-@celery.task(bind=True)
+@shared_task(bind=True)
 def send_bulk_emails_task(self, event_id, subject, template_name, recipients):
     """Background task for bulk email sending"""
     from app.services.email_service import send_bulk_emails
@@ -86,7 +86,7 @@ def send_bulk_emails_task(self, event_id, subject, template_name, recipients):
         raise
 
 
-@celery.task(bind=True)
+@shared_task(bind=True)
 def generate_tickets_task(self, event_id):
     """Background task for ticket generation"""
     from app.services.ticket_service import generate_bulk_tickets
