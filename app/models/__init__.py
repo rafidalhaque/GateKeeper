@@ -13,7 +13,8 @@ def init_models():
     """Import all models to register them with SQLAlchemy"""
     from app.models.events import Event, Team, Participant, EmailLog, CheckinLog, CeleryJob
     from app.models.auth import Role, Permission, RolePermission, AdminUser
-    
+    from app.models.settings import AppSettings
+
     # Return models for convenience
     return {
         'Event': Event,
@@ -25,5 +26,6 @@ def init_models():
         'Role': Role,
         'Permission': Permission,
         'RolePermission': RolePermission,
-        'AdminUser': AdminUser
+        'AdminUser': AdminUser,
+        'AppSettings': AppSettings
     }

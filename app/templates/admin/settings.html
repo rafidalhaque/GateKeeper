@@ -258,6 +258,69 @@
         </div>
     </div>
 
+    <!-- Token Printing Configuration (Super Admin Only) -->
+    <div class="card bg-base-100 shadow-xl mb-6" x-show="isSuperAdmin">
+        <div class="card-body">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="card-title">Token Printing Configuration</h2>
+                <span class="badge badge-warning">Super Admin Only</span>
+            </div>
+
+            <div class="alert alert-info mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="font-semibold">Automatic Token/Badge Printing</p>
+                    <p class="text-xs">When enabled, tokens will automatically print after participant check-in via QR scanner</p>
+                </div>
+            </div>
+
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input
+                        type="checkbox"
+                        class="toggle toggle-lg"
+                        x-model="tokenPrintingEnabled"
+                        @change="updateTokenPrinting()"
+                    >
+                    <div>
+                        <span class="label-text font-semibold text-lg">Enable Token Printing</span>
+                        <p class="text-sm text-base-content/60">
+                            When enabled:
+                        </p>
+                        <ul class="text-xs text-base-content/60 list-disc list-inside ml-4 mt-1">
+                            <li>Solo participants get a token after check-in</li>
+                            <li>First team member to check-in gets a token for the whole team</li>
+                            <li>Token opens in print dialog automatically</li>
+                        </ul>
+                        <p class="text-sm text-base-content/60 mt-2">
+                            When disabled:
+                        </p>
+                        <ul class="text-xs text-base-content/60 list-disc list-inside ml-4 mt-1">
+                            <li>No automatic printing after check-in</li>
+                            <li>Tokens can still be viewed/printed manually from participant pages</li>
+                        </ul>
+                    </div>
+                </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-info">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                </svg>
+                <div>
+                    <p class="text-sm font-semibold">Need to customize tokens?</p>
+                    <p class="text-xs text-base-content/60">
+                        Visit the <a href="/admin/token-designer" class="link link-primary">Token Designer</a> to customize the design and layout
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!--Test SMTP Modal -->
     <div x-show="showTestModal" class="modal" :class="{ 'modal-open': showTestModal }">
         <div class="modal-box">
@@ -457,6 +520,7 @@ window.settingsManager = function() {
         smtpConfigExists: false,
         showTestModal: false,
         testEmail: '',
+        tokenPrintingEnabled: true, // Default to enabled
 
         async loadSettings() {
             try {
@@ -474,6 +538,7 @@ window.settingsManager = function() {
                 if (this.isSuperAdmin) {
                     console.log('Loading SMTP config for super admin');
                     await this.loadSMTPConfig();
+                    await this.loadTokenPrintingSetting();
                 }
 
                 // Load database stats
@@ -649,6 +714,50 @@ window.settingsManager = function() {
             } catch (error) {
                 console.error('Error deleting SMTP config:', error);
                 showAlert('Error deleting SMTP configuration', 'error');
+            }
+        },
+
+        async loadTokenPrintingSetting() {
+            try {
+                const response = await authFetch('/api/settings/token-printing');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.tokenPrintingEnabled = data.enabled;
+                    console.log('Token printing enabled:', this.tokenPrintingEnabled);
+                }
+            } catch (error) {
+                console.error('Error loading token printing setting:', error);
+            }
+        },
+
+        async updateTokenPrinting() {
+            try {
+                const response = await authFetch('/api/settings/token-printing', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        enabled: this.tokenPrintingEnabled
+                    })
+                });
+
+                if (response.ok) {
+                    showAlert(
+                        this.tokenPrintingEnabled
+                            ? 'Token printing enabled successfully'
+                            : 'Token printing disabled successfully',
+                        'success'
+                    );
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error updating token printing setting', 'error');
+                    // Revert the toggle on error
+                    this.tokenPrintingEnabled = !this.tokenPrintingEnabled;
+                }
+            } catch (error) {
+                console.error('Error updating token printing:', error);
+                showAlert('Error updating token printing setting', 'error');
+                // Revert the toggle on error
+                this.tokenPrintingEnabled = !this.tokenPrintingEnabled;
             }
         },
     };
