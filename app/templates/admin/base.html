@@ -54,6 +54,17 @@
                             <li class="menu-title">
                                 <span>Admin User</span>
                             </li>
+                            <li>
+                                <a href="#" id="theme-toggle" class="flex items-center gap-2">
+                                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                                    </svg>
+                                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 hidden">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                                    </svg>
+                                    <span id="theme-text">Light Mode</span>
+                                </a>
+                            </li>
                             <li><a href="/admin/settings">Settings</a></li>
                             <li><a id="navLogoutBtn" href="#" class="logout-btn" data-action="logout">Logout</a></li>
                         </ul>
@@ -238,6 +249,113 @@ function attachLogoutHandlers() {
             showAlert: typeof window.showAlert,
             authFetch: typeof window.authFetch
         });
+
+        // Theme Management Functions
+        window.themeManager = {
+            // Get current theme from localStorage or default to light
+            getTheme: function() {
+                return localStorage.getItem('app-theme') || 'light';
+            },
+            
+            // Set theme
+            setTheme: function(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('app-theme', theme);
+                this.updateThemeUI(theme);
+                this.saveThemePreference(theme);
+            },
+            
+            // Update theme UI elements
+            updateThemeUI: function(theme) {
+                const themeIconLight = document.getElementById('theme-icon-light');
+                const themeIconDark = document.getElementById('theme-icon-dark');
+                const themeText = document.getElementById('theme-text');
+                
+                if (themeIconLight && themeIconDark && themeText) {
+                    if (theme === 'dark') {
+                        themeIconLight.classList.add('hidden');
+                        themeIconDark.classList.remove('hidden');
+                        themeText.textContent = 'Dark Mode';
+                    } else {
+                        themeIconLight.classList.remove('hidden');
+                        themeIconDark.classList.add('hidden');
+                        themeText.textContent = 'Light Mode';
+                    }
+                }
+            },
+            
+            // Toggle theme
+            toggleTheme: function() {
+                const currentTheme = this.getTheme();
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                this.setTheme(newTheme);
+            },
+            
+            // Save theme preference to backend
+            saveThemePreference: async function(theme) {
+                try {
+                    const response = await fetch('/api/settings/theme', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ theme: theme })
+                    });
+                    
+                    if (!response.ok && response.status !== 401) {
+                        console.warn('Failed to save theme preference to server');
+                    }
+                } catch (error) {
+                    // Silently fail - user might not be authenticated or server unavailable
+                    console.debug('Could not save theme preference:', error);
+                }
+            },
+            
+            // Load theme preference from backend
+            loadThemePreference: async function() {
+                try {
+                    const response = await fetch('/api/settings/theme');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.theme) {
+                            this.setTheme(data.theme);
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    // Fall back to localStorage
+                    console.debug('Could not load theme preference from server:', error);
+                }
+                
+                // Use localStorage theme
+                const theme = this.getTheme();
+                this.setTheme(theme);
+            },
+            
+            // Initialize theme on page load
+            init: function() {
+                // Load theme preference
+                this.loadThemePreference();
+                
+                // Attach click handler to theme toggle
+                const themeToggle = document.getElementById('theme-toggle');
+                if (themeToggle) {
+                    themeToggle.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.toggleTheme();
+                    });
+                }
+            }
+        };
+
+        // Initialize theme when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                window.themeManager.init();
+            });
+        } else {
+            window.themeManager.init();
+        }
     </script>
     {% block extra_js %}{% endblock %}
 </body>

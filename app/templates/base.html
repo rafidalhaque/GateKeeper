@@ -47,6 +47,39 @@
     </footer>
     
     <!-- Custom JS -->
+    <script>
+        // Theme Management Functions (for public pages)
+        window.themeManager = {
+            getTheme: function() {
+                return localStorage.getItem('app-theme') || 'light';
+            },
+            
+            setTheme: function(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('app-theme', theme);
+            },
+            
+            toggleTheme: function() {
+                const currentTheme = this.getTheme();
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                this.setTheme(newTheme);
+            },
+            
+            init: function() {
+                const theme = this.getTheme();
+                this.setTheme(theme);
+            }
+        };
+
+        // Initialize theme when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                window.themeManager.init();
+            });
+        } else {
+            window.themeManager.init();
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
