@@ -389,8 +389,125 @@
                     </p>
                 </div>
             </div>
+
+            <div class="divider"></div>
+
+            <div class="alert alert-success">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Token printing is <strong x-text="tokenPrintingEnabled ? 'ENABLED' : 'DISABLED'"></strong></span>
+            </div>
         </div>
     </div>
+
+    <!-- Email Configuration (Super Admin Only) -->
+    <div class="card bg-base-100 shadow-xl mb-6" x-show="isSuperAdmin">
+        <div class="card-body">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    </svg>
+                    Email Configuration
+                </h2>
+                <span class="badge badge-warning">Super Admin Only</span>
+            </div>
+
+            <div class="alert alert-info mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="font-semibold">Ticket Email Settings</p>
+                    <p class="text-xs">Configure how ticket emails are sent to participants</p>
+                </div>
+            </div>
+
+            <!-- PDF Attachment Option -->
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input
+                        type="checkbox"
+                        class="toggle toggle-lg toggle-primary"
+                        x-model="emailConfig.attach_pdf_by_default"
+                    >
+                    <div>
+                        <span class="label-text font-semibold text-lg">Attach PDF Tickets by Default</span>
+                        <p class="text-sm text-base-content/60">
+                            When enabled, PDF tickets will be automatically attached to ticket emails
+                        </p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Auto-send on Registration -->
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input
+                        type="checkbox"
+                        class="toggle toggle-lg toggle-secondary"
+                        x-model="emailConfig.send_ticket_on_registration"
+                    >
+                    <div>
+                        <span class="label-text font-semibold text-lg">Send Ticket on Registration</span>
+                        <p class="text-sm text-base-content/60">
+                            Automatically email tickets when participants register or are imported
+                        </p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Event Reminder -->
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input
+                        type="checkbox"
+                        class="toggle toggle-lg toggle-accent"
+                        x-model="emailConfig.send_reminder_before_event"
+                    >
+                    <div>
+                        <span class="label-text font-semibold text-lg">Send Event Reminders</span>
+                        <p class="text-sm text-base-content/60">
+                            Send reminder emails before events with ticket attached
+                        </p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Reminder Days -->
+            <div class="form-control mb-4" x-show="emailConfig.send_reminder_before_event">
+                <label class="label">
+                    <span class="label-text">Reminder Days Before Event</span>
+                </label>
+                <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    class="input input-bordered"
+                    x-model="emailConfig.reminder_days_before"
+                    placeholder="1"
+                >
+                <label class="label">
+                    <span class="label-text-alt">How many days before the event to send reminder (1-30)</span>
+                </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Save Button -->
+            <div class="flex gap-2">
+                <button @click="saveEmailConfig()" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Save Email Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Preferences -->
 
     <!--Test SMTP Modal -->
     <div x-show="showTestModal" class="modal" :class="{ 'modal-open': showTestModal }">
@@ -593,6 +710,13 @@ window.settingsManager = function() {
         testEmail: '',
         tokenPrintingEnabled: true, // Default to enabled
         themePreference: 'light', // Default theme
+        emailConfig: {
+            attach_pdf_by_default: true,
+            default_ticket_template: null,
+            send_ticket_on_registration: false,
+            send_reminder_before_event: false,
+            reminder_days_before: 1
+        },
 
         async loadSettings() {
             try {
@@ -614,6 +738,7 @@ window.settingsManager = function() {
                     console.log('Loading SMTP config for super admin');
                     await this.loadSMTPConfig();
                     await this.loadTokenPrintingSetting();
+                    await this.loadEmailConfig();
                 }
 
                 // Load database stats
@@ -888,6 +1013,45 @@ window.settingsManager = function() {
                 showAlert('Error updating token printing setting', 'error');
                 // Revert the toggle on error
                 this.tokenPrintingEnabled = !this.tokenPrintingEnabled;
+            }
+        },
+
+        async loadEmailConfig() {
+            try {
+                const response = await authFetch('/api/settings/email-config');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.emailConfig = {
+                        attach_pdf_by_default: data.attach_pdf_by_default === 'true' || data.attach_pdf_by_default === true,
+                        default_ticket_template: data.default_ticket_template,
+                        send_ticket_on_registration: data.send_ticket_on_registration === 'true' || data.send_ticket_on_registration === true,
+                        send_reminder_before_event: data.send_reminder_before_event === 'true' || data.send_reminder_before_event === true,
+                        reminder_days_before: parseInt(data.reminder_days_before) || 1
+                    };
+                    console.log('Email config loaded:', this.emailConfig);
+                }
+            } catch (error) {
+                console.error('Error loading email config:', error);
+            }
+        },
+
+        async saveEmailConfig() {
+            try {
+                const response = await authFetch('/api/settings/email-config', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.emailConfig)
+                });
+
+                if (response.ok) {
+                    showAlert('Email configuration saved successfully', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Error saving email configuration', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving email config:', error);
+                showAlert('Error saving email configuration', 'error');
             }
         },
     };

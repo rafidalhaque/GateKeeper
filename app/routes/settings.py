@@ -200,3 +200,73 @@ def update_theme_preference():
         'message': 'Theme preference updated successfully',
         'theme': theme
     })
+
+
+@bp.route('/email-config', methods=['GET'])
+@admin_required
+def get_email_config():
+    """Get email configuration settings"""
+    config = {
+        'attach_pdf_by_default': AppSettings.get('email_attach_pdf_by_default', 'true'),
+        'default_ticket_template': AppSettings.get('email_default_ticket_template', None),
+        'send_ticket_on_registration': AppSettings.get('email_send_ticket_on_registration', 'false'),
+        'send_reminder_before_event': AppSettings.get('email_send_reminder_before_event', 'false'),
+        'reminder_days_before': AppSettings.get('email_reminder_days_before', '1')
+    }
+
+    return jsonify(config)
+
+
+@bp.route('/email-config', methods=['PUT'])
+@super_admin_required
+def update_email_config():
+    """Update email configuration settings (Super Admin only)"""
+    data = request.get_json()
+
+    current_user = get_current_user()
+
+    # Update settings
+    if 'attach_pdf_by_default' in data:
+        AppSettings.set(
+            'email_attach_pdf_by_default',
+            data['attach_pdf_by_default'],
+            'Attach PDF tickets to emails by default',
+            current_user.id if current_user else None
+        )
+
+    if 'default_ticket_template' in data:
+        AppSettings.set(
+            'email_default_ticket_template',
+            data['default_ticket_template'],
+            'Default email template for ticket emails',
+            current_user.id if current_user else None
+        )
+
+    if 'send_ticket_on_registration' in data:
+        AppSettings.set(
+            'email_send_ticket_on_registration',
+            data['send_ticket_on_registration'],
+            'Automatically send ticket email when participant registers',
+            current_user.id if current_user else None
+        )
+
+    if 'send_reminder_before_event' in data:
+        AppSettings.set(
+            'email_send_reminder_before_event',
+            data['send_reminder_before_event'],
+            'Send reminder emails before event',
+            current_user.id if current_user else None
+        )
+
+    if 'reminder_days_before' in data:
+        AppSettings.set(
+            'email_reminder_days_before',
+            data['reminder_days_before'],
+            'How many days before event to send reminder',
+            current_user.id if current_user else None
+        )
+
+    return jsonify({
+        'success': True,
+        'message': 'Email configuration updated successfully'
+    })

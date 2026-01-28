@@ -108,3 +108,67 @@ def get_email_logs():
         'created_at': log.created_at.isoformat(),
         'sent_at': log.sent_at.isoformat() if log.sent_at else None
     } for log in logs])
+
+
+@bp.route('/send-ticket', methods=['POST'])
+@permission_required('email.send_bulk')
+def send_single_ticket_email():
+    """Send ticket email to a single participant"""
+    from app.services.email_service import send_ticket_email
+
+    data = request.get_json()
+
+    if 'participant_id' not in data:
+        return jsonify({'error': 'Missing participant_id'}), 400
+
+    # Optional parameters
+    template_id = data.get('template_id')
+    attach_pdf = data.get('attach_pdf', True)
+
+    # Send ticket email
+    success, error = send_ticket_email(
+        participant_id=data['participant_id'],
+        template_id=template_id,
+        attach_pdf=attach_pdf
+    )
+
+    if success:
+        return jsonify({
+            'success': True,
+            'message': 'Ticket email sent successfully'
+        }), 200
+    else:
+        return jsonify({
+            'success': False,
+            'error': error
+        }), 500
+
+
+@bp.route('/send-bulk-tickets', methods=['POST'])
+@permission_required('email.send_bulk')
+def send_bulk_tickets():
+    """Send ticket emails to all participants in an event"""
+    from app.services.email_service import send_bulk_ticket_emails
+
+    data = request.get_json()
+
+    if 'event_id' not in data:
+        return jsonify({'error': 'Missing event_id'}), 400
+
+    # Validate event exists
+    event = Event.query.get(data['event_id'])
+    if not event:
+        return jsonify({'error': 'Event not found'}), 404
+
+    # Optional parameters
+    template_id = data.get('template_id')
+    attach_pdf = data.get('attach_pdf', True)
+
+    # Send emails
+    result = send_bulk_ticket_emails(
+        event_id=data['event_id'],
+        template_id=template_id,
+        attach_pdf=attach_pdf
+    )
+
+    return jsonify(result), 200
