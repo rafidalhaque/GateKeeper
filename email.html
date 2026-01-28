@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket & CTFd Credentials - Al-Khwarizmi Science Fest</title>
+    <style>
+        /* Base Reset */
+        body {
+            margin: 0; padding: 0; min-width: 100%; width: 100% !important; height: 100% !important;
+            background-color: #f0f2f5; font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .email-container {
+            max-width: 600px; margin: 20px auto; background-color: #ffffff;
+            border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* Header */
+        .header {
+            background-color: #04046c; /* Solid fallback */
+            background: linear-gradient(135deg, #04046c 0%, #1e32b4 100%);
+            color: #ffffff; padding: 45px 30px; text-align: center;
+        }
+        .header-logo { max-width: 130px; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 26px; letter-spacing: 0.5px; }
+        .header p { margin: 8px 0 0; opacity: 0.8; font-size: 16px; }
+
+        /* Content Areas */
+        .content { padding: 35px 40px; color: #2d3436; }
+        .greeting { font-size: 16px; line-height: 1.6; margin-bottom: 25px; }
+
+        /* Resource Links */
+        .resource-card {
+            background-color: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;
+        }
+        .resource-card h3 { margin: 0 0 10px; font-size: 16px; color: #04046c; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Credential Styling */
+        .credentials-box {
+            background-color: #ffffff; border: 2px dashed #e2e8f0;
+            padding: 20px; margin: 25px 0; border-radius: 8px;
+        }
+        .credential-label { font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+        .credential-value {
+            display: block; background: #f1f5f9; padding: 10px;
+            margin-top: 5px; border-radius: 4px; font-family: monospace; font-size: 15px; color: #1e32b4;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block; padding: 12px 25px; border-radius: 6px;
+            text-decoration: none; font-weight: 600; font-size: 14px;
+            margin-top: 10px; transition: background 0.3s;
+        }
+        .btn-primary { background-color: #1e32b4; color: #ffffff; }
+        .btn-outline { border: 2px solid #1e32b4; color: #1e32b4; }
+
+        /* Notices */
+        .notice-box {
+            background-color: #fff9eb; border-left: 4px solid #f59e0b;
+            padding: 20px; margin: 25px 0; border-radius: 4px;
+        }
+        .notice-box h4 { margin: 0 0 10px; color: #92400e; font-size: 16px; }
+        .notice-box li { font-size: 14px; color: #92400e; margin-bottom: 8px; }
+
+        /* Footer */
+        .footer { background-color: #f8fafc; padding: 30px; text-align: center; color: #94a3b8; font-size: 12px; }
+        .footer-logo { max-width: 80px; filter: grayscale(1); opacity: 0.6; margin-bottom: 15px; }
+
+        @media only screen and (max-width: 600px) {
+            .content { padding: 25px 20px; }
+            .header h1 { font-size: 22px; }
+            .email-container { margin: 0; border-radius: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img class="header-logo" src="cid:img_82f2c2240412445e84bd673c5f7acd91@gatekeeper" alt="AKSF Logo">
+            <h1>Al-Khwarizmi CTF 2025</h1>
+            <p>Participant Welcome Kit</p>
+        </div>
+
+        <div class="content">
+            <div class="greeting">
+                <p><strong>Assalamu Alaikum, {{participant.name}}!</strong></p>
+                <p>Welcome to the Al-Khwarizmi CTF. Your registration is confirmed, and your environment is ready. Here is your ticket and CTFd Credentials.</p>
+            </div>
+
+            <div class="resource-card">
+                <h3>CTFd Platform</h3>
+                <p style="font-size: 14px; margin-bottom: 15px;">Access challenges here:</p>
+                <a href="https://area51.shibirsec.qzz.io/" class="btn btn-primary" target="_blank">Enter Platform</a>
+            </div>
+
+            <div class="credentials-box">
+                <p style="margin-top:0; font-weight: bold; color: #04046c;">Team: {{team.name}}</p>
+
+                <div style="margin-bottom: 15px;">
+                    <span>Check attached PDF for your Ticket and CTF Creds.</span>
+            </div>
+
+
+            <div class="notice-box">
+                <h4>⚠️ Essential Checklist:</h4>
+                <ul style="padding-left: 20px; margin: 0;">
+                    <li>Bring your <strong>Student ID Card</strong> for verification.</li>
+                    <li>A <strong>Multiplug</strong> is required for your team station.</li>
+                    <li>Do not share credentials with other teams.</li>
+                    <li>Technical support is available via <strong>#open-ticket</strong> on Discord.</li>
+                </ul>
+            </div>
+
+            <div class="greeting" style="text-align: center; border-top: 1px solid #eee; pt: 20px;">
+                <p>Good luck and happy hacking! 🏆</p>
+                <p style="font-size: 14px; color: #64748b;">— The Organizing Team</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <img class="footer-logo" src="cid:img_4792e1a060834bde8955201fdd61ec23@gatekeeper" alt="Logo">
+            <p><strong>Al-Khwarizmi Science Fest 2025</strong>by<br>Bangladesh Islami Chhatrashibir</p>
+            <p>&copy; 2025 All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
