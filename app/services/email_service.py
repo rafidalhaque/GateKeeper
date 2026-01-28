@@ -65,6 +65,7 @@ def send_email_smtp(recipient, subject, body, html=None, attachments=None, embed
 
     try:
         message = MIMEMultipart('mixed')
+        # Encode subject properly to handle Unicode characters
         message['Subject'] = subject
         message['From'] = f"{config['sender_name']} <{config['sender_email']}>"
         message['To'] = recipient
@@ -73,9 +74,9 @@ def send_email_smtp(recipient, subject, body, html=None, attachments=None, embed
         msg_alternative = MIMEMultipart('alternative')
         message.attach(msg_alternative)
 
-        # Attach text part
+        # Attach text part with UTF-8 encoding
         if body:
-            part1 = MIMEText(body, 'plain')
+            part1 = MIMEText(body, 'plain', 'utf-8')
             msg_alternative.attach(part1)
 
         # If we have embedded images, create related multipart
@@ -83,8 +84,8 @@ def send_email_smtp(recipient, subject, body, html=None, attachments=None, embed
             msg_related = MIMEMultipart('related')
             msg_alternative.attach(msg_related)
 
-            # Attach HTML
-            part2 = MIMEText(html, 'html')
+            # Attach HTML with UTF-8 encoding
+            part2 = MIMEText(html, 'html', 'utf-8')
             msg_related.attach(part2)
 
             # Attach embedded images
@@ -94,8 +95,8 @@ def send_email_smtp(recipient, subject, body, html=None, attachments=None, embed
                 img_part.add_header('Content-Disposition', 'inline', filename=img['filename'])
                 msg_related.attach(img_part)
         elif html:
-            # Just attach HTML without embedded images
-            part2 = MIMEText(html, 'html')
+            # Just attach HTML without embedded images with UTF-8 encoding
+            part2 = MIMEText(html, 'html', 'utf-8')
             msg_alternative.attach(part2)
 
         # Attach files (PDFs, etc.)
@@ -119,7 +120,11 @@ def send_email_smtp(recipient, subject, body, html=None, attachments=None, embed
                 server.starttls()
 
         server.login(config['username'], config['password'])
-        server.sendmail(config['sender_email'], recipient, message.as_string())
+
+        # Use as_bytes() instead of as_string() to properly handle Unicode
+        # This ensures proper UTF-8 encoding for all characters including non-ASCII
+        message_bytes = message.as_bytes()
+        server.sendmail(config['sender_email'], recipient, message_bytes)
         server.quit()
 
         return True, None
