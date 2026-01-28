@@ -95,7 +95,11 @@ def render_token_template(event, participant):
     template_html = event.token_template_html or default_template
 
     # Prepare context
+    from flask import current_app
     qr_code = generate_qr_code(participant.unique_url_uuid)
+
+    # Get base URL for absolute image paths
+    base_url = current_app.config.get('APP_URL', 'http://localhost:5000')
 
     context = {
         'event_name': event.name,
@@ -104,7 +108,8 @@ def render_token_template(event, participant):
         'participant_name': participant.name,
         'email': participant.email,
         'participant_uuid': str(participant.unique_url_uuid),
-        'qr_code': qr_code
+        'qr_code': qr_code,
+        'base_url': base_url  # Add base URL for absolute image paths
     }
 
     # Add team info if applicable
@@ -168,7 +173,11 @@ def render_token_preview(event, participant=None, custom_html=None):
         """
 
     # Prepare context
+    from flask import current_app
     qr_code = generate_qr_code(participant.unique_url_uuid)
+
+    # Get base URL for absolute image paths
+    base_url = current_app.config.get('APP_URL', 'http://localhost:5000')
 
     context = {
         'event_name': event.name,
@@ -177,7 +186,8 @@ def render_token_preview(event, participant=None, custom_html=None):
         'participant_name': participant.name,
         'email': participant.email,
         'participant_uuid': str(participant.unique_url_uuid),
-        'qr_code': qr_code
+        'qr_code': qr_code,
+        'base_url': base_url  # Add base URL for absolute image paths
     }
 
     # Add team info if applicable

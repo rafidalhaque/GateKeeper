@@ -73,6 +73,9 @@ def render_ticket_template(event, participant):
     from flask import current_app
     qr_code = generate_qr_code(participant.unique_url_uuid)
     
+    # Get base URL for absolute image paths (important for PDF rendering)
+    base_url = current_app.config.get('APP_URL', 'http://localhost:5000')
+
     context = {
         'event_name': event.name,
         'event_date': event.date.strftime('%Y-%m-%d'),
@@ -82,6 +85,7 @@ def render_ticket_template(event, participant):
         'participant_uuid': str(participant.unique_url_uuid),
         't_shirt_size': participant.custom_data.get('t-shirt_size') if participant.custom_data else None,
         'qr_code': qr_code,
+        'base_url': base_url,  # Add base URL for absolute image paths
         'custom_css': f'<style>{event.ticket_template_css}</style>' if event.ticket_template_css else ''
     }
     
@@ -205,6 +209,10 @@ def render_ticket_preview(event, participant=None, custom_html=None, custom_css=
     # Generate QR code
     qr_code = generate_qr_code(participant.unique_url_uuid)
 
+    # Get base URL for absolute image paths
+    from flask import current_app
+    base_url = current_app.config.get('APP_URL', 'http://localhost:5000')
+
     # Prepare context
     context = {
         'event_name': event.name,
@@ -215,6 +223,7 @@ def render_ticket_preview(event, participant=None, custom_html=None, custom_css=
         'participant_uuid': str(participant.unique_url_uuid),
         't_shirt_size': participant.custom_data.get('t_shirt_size') if hasattr(participant, 'custom_data') and participant.custom_data else getattr(participant, 't_shirt_size', None),
         'qr_code': qr_code,
+        'base_url': base_url,  # Add base URL for absolute image paths
         'custom_css': f'<style>{custom_css or event.ticket_template_css or ""}</style>'
     }
 
