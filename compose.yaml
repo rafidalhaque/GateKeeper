@@ -13,7 +13,7 @@ services:
     networks:
       - gatekeeper-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,18 +26,18 @@ services:
     expose:
       - ${REDIS_PORT}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # Flask application
   web:
-    build: 
+    build:
       context: .
       dockerfile: docker/Dockerfile
     ports:
-      - "5000:5000"
+      - "5010:5010"
     environment:
       - FLASK_ENV=production
     env_file:
@@ -55,7 +55,7 @@ services:
 
   # Celery worker
   celery-worker:
-    build: 
+    build:
       context: .
       dockerfile: docker/Dockerfile
     environment:
@@ -76,7 +76,7 @@ services:
 
   # Celery beat (for scheduled tasks)
   celery-beat:
-    build: 
+    build:
       context: .
       dockerfile: docker/Dockerfile
     environment:
@@ -98,6 +98,7 @@ services:
 
 volumes:
   postgres_data:
+
 
 networks:
   gatekeeper-network:
