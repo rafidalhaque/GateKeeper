@@ -49,7 +49,6 @@ services:
         condition: service_healthy
     networks:
       - gatekeeper-network
-      - public
     volumes:
       - ./uploads:/app/uploads
       - ./tmp:/app/tmp
@@ -70,7 +69,6 @@ services:
         condition: service_healthy
     networks:
       - gatekeeper-network
-      - public
     volumes:
       - ./uploads:/app/uploads
       - ./tmp:/app/tmp
@@ -96,7 +94,6 @@ services:
         condition: service_healthy
     networks:
       - gatekeeper-network
-      - public
     command: celery -A app.celery_app beat --loglevel=info
 
 volumes:
@@ -105,5 +102,3 @@ volumes:
 networks:
   gatekeeper-network:
     driver: bridge
-  public:
-    external: true
