@@ -210,6 +210,14 @@ def admin_css_guide():
     return render_template('admin/css_guide.html', config=get_supabase_config())
 
 
+@bp.route('/admin/image-library')
+@admin_required
+@permission_required_html('manage_email_templates')
+def admin_image_library():
+    """Image library page for managing template images"""
+    return render_template('admin/image_library.html', config=get_supabase_config())
+
+
 @bp.route('/admin/jobs')
 @admin_required
 def admin_jobs():

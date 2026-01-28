@@ -50,6 +50,7 @@ def create_app(config_name='default'):
     from app.routes import invitations as invitations_bp
     from app.routes import jobs as jobs_bp
     from app.routes import settings as settings_bp
+    from app.routes import attachments as attachments_bp
 
     app.register_blueprint(events_bp.bp)
     app.register_blueprint(participants_bp.bp)
@@ -71,6 +72,7 @@ def create_app(config_name='default'):
     app.register_blueprint(invitations_bp.bp)
     app.register_blueprint(jobs_bp.bp)
     app.register_blueprint(settings_bp.bp)
+    app.register_blueprint(attachments_bp.bp)
 
     # Register CLI commands
     from app.cli import register_commands

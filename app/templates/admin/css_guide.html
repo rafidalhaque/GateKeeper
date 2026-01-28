@@ -18,8 +18,15 @@
         <a href="#colors" class="btn btn-sm btn-outline">Colors</a>
         <a href="#spacing" class="btn btn-sm btn-outline">Spacing</a>
         <a href="#borders" class="btn btn-sm btn-outline">Borders</a>
+        <a href="#images" class="btn btn-sm btn-outline">Images</a>
         <a href="#badges" class="btn btn-sm btn-outline">Badge Sizes</a>
         <a href="#email" class="btn btn-sm btn-outline">Email Best Practices</a>
+        <a href="/admin/image-library" class="btn btn-sm btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            Image Library
+        </a>
     </div>
 
     <!-- Content Sections -->
@@ -380,7 +387,138 @@
             </div>
         </section>
 
-        <!-- Quick Examples -->
+        <!-- Images -->
+        <section id="images" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">🖼️ Working with Images</h2>
+
+                <div class="space-y-4">
+                    <div class="alert alert-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Upload images in the <a href="/admin/image-library" class="link font-bold">Image Library</a> and copy the HTML code to use here!</span>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">For Email Templates (CID)</h3>
+                        <p class="text-sm text-base-content/70 mb-2">Use Content-ID (CID) for inline email images. Upload your image and copy the CID code:</p>
+                        <div class="mockup-code">
+                            <pre data-prefix="$"><code>&lt;img src="cid:img_abc123@gatekeeper" alt="Company Logo" /&gt;</code></pre>
+                        </div>
+                        <div class="alert alert-info mt-2">
+                            <span><strong>Why CID?</strong> CID embeds images directly in emails, avoiding external links that may be blocked by email clients.</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">For Tickets and Tokens (Direct URL)</h3>
+                        <p class="text-sm text-base-content/70 mb-2">For PDF tickets and tokens, use direct URLs:</p>
+                        <div class="mockup-code">
+                            <pre data-prefix="$"><code>&lt;img src="/api/attachments/image/abc-123-xyz" alt="Logo" style="width: 100px;" /&gt;</code></pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">Image Styling</h3>
+                        <div class="mockup-code">
+                            <pre data-prefix="1"><code>&lt;style&gt;</code></pre>
+                            <pre data-prefix="2"><code>  /* Fixed size */</code></pre>
+                            <pre data-prefix="3"><code>  .logo { width: 150px; height: auto; }</code></pre>
+                            <pre data-prefix="4"><code></code></pre>
+                            <pre data-prefix="5"><code>  /* Responsive */</code></pre>
+                            <pre data-prefix="6"><code>  .responsive-img { max-width: 100%; height: auto; }</code></pre>
+                            <pre data-prefix="7"><code></code></pre>
+                            <pre data-prefix="8"><code>  /* Centered */</code></pre>
+                            <pre data-prefix="9"><code>  .center-img { display: block; margin: 0 auto; }</code></pre>
+                            <pre data-prefix="10"><code></code></pre>
+                            <pre data-prefix="11"><code>  /* Circular/Rounded */</code></pre>
+                            <pre data-prefix="12"><code>  .rounded { border-radius: 8px; }</code></pre>
+                            <pre data-prefix="13"><code>  .circle { border-radius: 50%; }</code></pre>
+                            <pre data-prefix="14"><code>&lt;/style&gt;</code></pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">Background Images</h3>
+                        <div class="mockup-code">
+                            <pre data-prefix="1"><code>.ticket-bg {</code></pre>
+                            <pre data-prefix="2"><code>  background-image: url('/api/attachments/image/abc-123');</code></pre>
+                            <pre data-prefix="3"><code>  background-size: cover;     /* Fill entire area */</code></pre>
+                            <pre data-prefix="4"><code>  background-position: center;/* Center the image */</code></pre>
+                            <pre data-prefix="5"><code>  background-repeat: no-repeat;</code></pre>
+                            <pre data-prefix="6"><code>}</code></pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">Common Use Cases</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="border border-base-300 rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">Header Logo</h4>
+                                <div class="mockup-code text-xs">
+                                    <pre><code>&lt;div class="header"&gt;
+  &lt;img src="cid:logo"
+       style="width: 120px;"&gt;
+&lt;/div&gt;</code></pre>
+                                </div>
+                            </div>
+
+                            <div class="border border-base-300 rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">Sponsor Logos</h4>
+                                <div class="mockup-code text-xs">
+                                    <pre><code>&lt;div class="sponsors"&gt;
+  &lt;img src="cid:sponsor1"
+       style="width: 80px;
+              margin: 10px;"&gt;
+  &lt;img src="cid:sponsor2"
+       style="width: 80px;
+              margin: 10px;"&gt;
+&lt;/div&gt;</code></pre>
+                                </div>
+                            </div>
+
+                            <div class="border border-base-300 rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">Badge Photo</h4>
+                                <div class="mockup-code text-xs">
+                                    <pre><code>&lt;img src="{{ "{{" }} photo_url }}"
+     style="width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;"&gt;</code></pre>
+                                </div>
+                            </div>
+
+                            <div class="border border-base-300 rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">Watermark</h4>
+                                <div class="mockup-code text-xs">
+                                    <pre><code>.watermark {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  opacity: 0.3;
+  width: 100px;
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <div>
+                            <strong>Important:</strong>
+                            <ul class="list-disc list-inside text-sm mt-1">
+                                <li>Keep image file sizes under 1MB for faster loading</li>
+                                <li>Use PNG for logos with transparency</li>
+                                <li>Use JPG for photos and detailed images</li>
+                                <li>SVG works great for icons and simple graphics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Examples -->
         <section class="card bg-base-100 shadow-xl">
             <div class="card-body">
                 <h2 class="card-title text-2xl mb-4">⚡ Quick Copy-Paste Examples</h2>

@@ -14,6 +14,7 @@ def init_models():
     from app.models.events import Event, Team, Participant, EmailLog, CheckinLog, CeleryJob
     from app.models.auth import Role, Permission, RolePermission, AdminUser
     from app.models.settings import AppSettings
+    from app.models.attachments import ImageAttachment
 
     # Return models for convenience
     return {
@@ -27,5 +28,6 @@ def init_models():
         'Permission': Permission,
         'RolePermission': RolePermission,
         'AdminUser': AdminUser,
-        'AppSettings': AppSettings
+        'AppSettings': AppSettings,
+        'ImageAttachment': ImageAttachment
     }

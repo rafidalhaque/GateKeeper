@@ -176,6 +176,10 @@ Contact the administrator if you need higher limits.
         {
             "name": "Settings",
             "description": "⚙️ Application settings and user preferences"
+        },
+        {
+            "name": "Image Attachments",
+            "description": "🖼️ Upload and manage images for use in email templates, tickets, and tokens"
         }
     ],
     "paths": {
@@ -1141,6 +1145,243 @@ Contact the administrator if you need higher limits.
                 "security": [{"BearerAuth": []}],
                 "responses": {
                     "200": {"description": "Role assigned"}
+                }
+            }
+        },
+        "/api/attachments/upload": {
+            "post": {
+                "tags": ["Image Attachments"],
+                "summary": "Upload an image attachment",
+                "description": "Upload an image to use in email templates, tickets, or tokens. Supports PNG, JPG, GIF, SVG (max 5MB)",
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["file"],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "Image file (PNG, JPG, GIF, SVG)"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Optional description of the image",
+                                        "example": "Company Logo"
+                                    },
+                                    "usage_type": {
+                                        "type": "string",
+                                        "enum": ["email", "ticket", "token", "all"],
+                                        "default": "all",
+                                        "description": "Where this image will be used"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Image uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {"type": "boolean"},
+                                        "message": {"type": "string"},
+                                        "attachment": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {"type": "string"},
+                                                "filename": {"type": "string"},
+                                                "original_filename": {"type": "string"},
+                                                "content_type": {"type": "string"},
+                                                "file_size": {"type": "integer"},
+                                                "cid": {"type": "string", "description": "Content-ID for email embedding"},
+                                                "url": {"type": "string"},
+                                                "html_img_tag": {"type": "string", "description": "Ready-to-use HTML img tag"}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {"description": "Invalid file or file too large"},
+                    "401": {"description": "Authentication required"},
+                    "403": {"description": "Insufficient permissions"}
+                }
+            }
+        },
+        "/api/attachments/": {
+            "get": {
+                "tags": ["Image Attachments"],
+                "summary": "List all image attachments",
+                "description": "Retrieve all uploaded images with optional filtering by usage type",
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "usage_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": ["email", "ticket", "token", "all"]
+                        },
+                        "description": "Filter by usage type"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of attachments",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {"type": "boolean"},
+                                        "attachments": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {"type": "string"},
+                                                    "filename": {"type": "string"},
+                                                    "original_filename": {"type": "string"},
+                                                    "cid": {"type": "string"},
+                                                    "description": {"type": "string"},
+                                                    "usage_type": {"type": "string"},
+                                                    "url": {"type": "string"},
+                                                    "created_at": {"type": "string", "format": "date-time"}
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {"description": "Authentication required"}
+                }
+            }
+        },
+        "/api/attachments/<attachment_id>": {
+            "get": {
+                "tags": ["Image Attachments"],
+                "summary": "Get attachment details",
+                "description": "Retrieve detailed information about a specific image attachment",
+                "parameters": [
+                    {
+                        "name": "attachment_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "Attachment ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachment details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {"type": "boolean"},
+                                        "attachment": {"type": "object"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {"description": "Attachment not found"}
+                }
+            },
+            "put": {
+                "tags": ["Image Attachments"],
+                "summary": "Update attachment metadata",
+                "description": "Update description or usage type of an image attachment",
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "attachment_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "description": {"type": "string"},
+                                    "usage_type": {
+                                        "type": "string",
+                                        "enum": ["email", "ticket", "token", "all"]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {"description": "Attachment updated successfully"},
+                    "404": {"description": "Attachment not found"},
+                    "401": {"description": "Authentication required"}
+                }
+            },
+            "delete": {
+                "tags": ["Image Attachments"],
+                "summary": "Delete attachment",
+                "description": "Soft delete an image attachment (can be recovered by admin)",
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "attachment_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {"description": "Attachment deleted successfully"},
+                    "404": {"description": "Attachment not found"},
+                    "401": {"description": "Authentication required"}
+                }
+            }
+        },
+        "/api/attachments/image/<attachment_id>": {
+            "get": {
+                "tags": ["Image Attachments"],
+                "summary": "Serve image file",
+                "description": "Get the actual image file for display or download",
+                "parameters": [
+                    {
+                        "name": "attachment_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image file",
+                        "content": {
+                            "image/*": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "404": {"description": "Image not found"}
                 }
             }
         }
