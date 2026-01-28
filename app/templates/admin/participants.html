@@ -10,6 +10,20 @@
 
 {% block content %}
 <div x-data="participantsManager()" x-init="fetchData()">
+    <!-- Custom Fields Info -->
+    <div x-show="customFieldHeaders.length > 0" class="alert alert-info mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+            <h3 class="font-bold">Custom Fields Detected</h3>
+            <div class="text-xs">
+                Showing <span class="font-semibold" x-text="customFieldHeaders.length"></span> custom field(s):
+                <span class="italic" x-text="customFieldHeaders.map(f => formatFieldName(f)).join(', ')"></span>
+            </div>
+        </div>
+    </div>
+
     <!-- Header with Filters and Actions -->
     <div class="flex flex-wrap gap-4 justify-between items-center mb-6">
         <div class="flex gap-2">
@@ -72,6 +86,20 @@
                             <th>Email</th>
                             <th>Event</th>
                             <th>Team</th>
+                            <!-- Dynamic custom field headers -->
+                            <template x-for="field in customFieldHeaders" :key="field">
+                                <th class="text-sm">
+                                    <div class="flex items-center gap-1">
+                                        <span x-text="formatFieldName(field)"></span>
+                                        <div class="tooltip tooltip-right" data-tip="Custom Field">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3 text-primary">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </th>
+                            </template>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -99,6 +127,12 @@
                                 <td x-text="participant.email"></td>
                                 <td x-text="getEventName(participant.event_id)"></td>
                                 <td x-text="participant.team?.team_name || 'N/A'"></td>
+                                <!-- Dynamic custom field values -->
+                                <template x-for="field in customFieldHeaders" :key="field">
+                                    <td>
+                                        <span class="badge badge-outline badge-sm" x-text="getCustomFieldValue(participant, field)"></span>
+                                    </td>
+                                </template>
                                 <td>
                                     <span class="badge" :class="participant.attendance_status ? 'badge-success' : 'badge-ghost'">
                                         <span x-text="participant.attendance_status ? 'Checked In' : 'Not Checked In'"></span>
@@ -145,6 +179,7 @@ window.participantsManager = function() {
         participants: [],
         filteredParticipants: [],
         events: [],
+        customFieldHeaders: [],  // Unique custom field keys across all participants
         loading: false,
         searchQuery: '',
         filterEventId: '',
@@ -166,6 +201,7 @@ window.participantsManager = function() {
                 const participantsRes = await window.authFetch('/api/participants');
                 if (participantsRes.ok) {
                     this.participants = await participantsRes.json();
+                    this.extractCustomFieldHeaders();
                     this.filterParticipants();
                 }
                 
@@ -183,7 +219,45 @@ window.participantsManager = function() {
                 this.loading = false;
             }
         },
-        
+
+        extractCustomFieldHeaders() {
+            // Extract unique custom field keys from all participants
+            const fieldSet = new Set();
+            this.participants.forEach(participant => {
+                if (participant.custom_data && typeof participant.custom_data === 'object') {
+                    Object.keys(participant.custom_data).forEach(key => {
+                        fieldSet.add(key);
+                    });
+                }
+            });
+            this.customFieldHeaders = Array.from(fieldSet).sort();
+        },
+
+        formatFieldName(fieldName) {
+            // Convert snake_case or camelCase to Title Case
+            return fieldName
+                .replace(/_/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ')
+                .trim();
+        },
+
+        getCustomFieldValue(participant, fieldName) {
+            if (participant.custom_data && participant.custom_data[fieldName]) {
+                const value = participant.custom_data[fieldName];
+                // Handle arrays, objects, or simple values
+                if (Array.isArray(value)) {
+                    return value.join(', ');
+                } else if (typeof value === 'object') {
+                    return JSON.stringify(value);
+                }
+                return value;
+            }
+            return '-';
+        },
+
         filterParticipants() {
             let filtered = this.participants;
             
@@ -325,13 +399,14 @@ window.participantsManager = function() {
         },
         
         exportToCSV() {
-            // Simple CSV export
-            const headers = ['Name', 'Email', 'Event', 'Team', 'Status'];
+            // CSV export with custom fields
+            const headers = ['Name', 'Email', 'Event', 'Team', ...this.customFieldHeaders.map(f => this.formatFieldName(f)), 'Status'];
             const rows = this.filteredParticipants.map(p => [
                 p.name,
                 p.email,
                 this.getEventName(p.event_id),
                 p.team?.team_name || 'N/A',
+                ...this.customFieldHeaders.map(field => this.getCustomFieldValue(p, field)),
                 p.attendance_status ? 'Checked In' : 'Not Checked In'
             ]);
             
@@ -340,8 +415,9 @@ window.participantsManager = function() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'participants.csv';
+            a.download = `participants_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
+            window.URL.revokeObjectURL(url);
         }
     };
 };
