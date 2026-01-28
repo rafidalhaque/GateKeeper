@@ -1,0 +1,19 @@
+#!/bin/sh
+
+export FLASK_APP=run.py
+
+# Create log directory if it doesn't exist
+mkdir -p /app/tmp/logs
+
+# Run database migrations and log output
+echo "Running database migrations..."
+flask db upgrade 2>&1 | tee /app/tmp/logs/migration.log
+
+# Start gunicorn with logging
+exec gunicorn --bind 0.0.0.0:5000 \
+    --workers 4 \
+    --timeout 120 \
+    --access-logfile /app/tmp/logs/access.log \
+    --error-logfile /app/tmp/logs/error.log \
+    --log-level info \
+    run:app

@@ -1,5 +1,5 @@
 # Use Python 3.11 slim image
-FROM python:3.11-slim
+FROM python:3.11-bullseye
 
 # Set working directory
 WORKDIR /app
@@ -20,10 +20,17 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements
 COPY ../requirements.txt .
+COPY ./docker/start /start
+COPY ./docker/create_super_admin app/create_super_admin
+
+# Make start script executable
+RUN chmod +x /start
+RUN chmod +x app/create_super_admin
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=bind,source=requirements.txt,target=requirements.txt \
+    python -m pip install -r requirements.txt
 # Copy application code
 COPY .. .
 
@@ -34,4 +41,4 @@ RUN mkdir -p uploads tmp
 EXPOSE 5000
 
 # Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "run:app"]
+CMD ["/start"]
