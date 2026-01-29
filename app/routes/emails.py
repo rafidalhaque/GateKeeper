@@ -36,12 +36,16 @@ def send_bulk_emails():
         'unique_url_uuid': str(p.unique_url_uuid)
     } for p in participants]
     
+    # Optional: email template ID to use for rendering
+    template_id = data.get('template_id')
+    
     # Queue background job
     task = send_bulk_emails_task.delay(
         data['event_id'],
         data['subject'],
         data['template_name'],
-        recipients
+        recipients,
+        template_id
     )
     
     return jsonify({

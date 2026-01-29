@@ -215,13 +215,19 @@
                     <label class="label">
                         <span class="label-text">Template</span>
                     </label>
-                    <select x-model="bulkEmailTemplate" class="select select-bordered">
+                    <select x-model="bulkEmailTemplate"
+                            class="select select-bordered"
+                            @change="handleTemplateChange($event.target.value)">
                         <option value="">Select a template</option>
-                        <option value="ticket">Ticket Delivery</option>
-                        <option value="reminder">Event Reminder</option>
-                        <option value="announcement">Announcement</option>
-                        <option value="custom">Custom Message</option>
+                        <template x-for="template in emailTemplates" :key="template.id">
+                            <option :value="template.id" x-text="`${template.name} (${template.type})`"></option>
+                        </template>
                     </select>
+                    <label class="label" x-show="emailTemplates.length === 0">
+                        <span class="label-text-alt text-warning">
+                            No email templates found. Create templates on the Email Templates page first.
+                        </span>
+                    </label>
                 </div>
 
                 <!-- Recipient Count -->
@@ -261,6 +267,7 @@ function eventDetail(eventId) {
         showImportModal: false,
         showAddParticipantModal: false,
         showBulkEmailModal: false,
+        emailTemplates: [],
         bulkEmailSubject: '',
         bulkEmailTemplate: '',
         selectedFile: null,
@@ -294,11 +301,32 @@ function eventDetail(eventId) {
                         this.teams = await teamsRes.json();
                     }
                 }
+
+                // Load available email templates
+                try {
+                    const templatesRes = await authFetch('/api/email-templates');
+                    if (templatesRes.ok) {
+                        this.emailTemplates = await templatesRes.json();
+                    }
+                } catch (error) {
+                    console.error('Error loading email templates:', error);
+                }
             } catch (error) {
                 console.error('Error loading event:', error);
                 showAlert('Error loading event details', 'error');
             } finally {
                 this.loading = false;
+            }
+        },
+
+        handleTemplateChange(templateId) {
+            if (!templateId) {
+                return;
+            }
+            const selected = this.emailTemplates.find(t => t.id === templateId);
+            // If subject is empty, prefill it from the selected template for convenience
+            if (selected && !this.bulkEmailSubject) {
+                this.bulkEmailSubject = selected.subject || this.bulkEmailSubject;
             }
         },
         
@@ -379,7 +407,10 @@ function eventDetail(eventId) {
                     body: JSON.stringify({
                         event_id: this.eventId,
                         subject: this.bulkEmailSubject,
-                        template_name: this.bulkEmailTemplate
+                        // Keep template_name for backwards compatibility / logging,
+                        // but primary selector is template_id which maps to EmailTemplate
+                        template_name: (this.emailTemplates.find(t => t.id === this.bulkEmailTemplate) || {}).name || null,
+                        template_id: this.bulkEmailTemplate
                     })
                 });
 

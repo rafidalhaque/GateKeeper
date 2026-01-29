@@ -5,7 +5,7 @@ from flask import current_app
 from flask_mail import Message
 from app.app import mail
 from app.models import db
-from app.models.events import EmailLog
+from app.models.events import EmailLog, Event, EmailTemplate
 from app.models.auth import SMTPConfig
 from datetime import datetime
 import smtplib
@@ -147,34 +147,103 @@ def send_email(recipient, subject, body, html=None, attachments=None, embedded_i
     return send_email_smtp(recipient, subject, body, html, attachments, embedded_images)
 
 
-def send_bulk_emails(event_id, subject, template_name, recipients):
-    """Send bulk emails to multiple recipients"""
+def send_bulk_emails(event_id, subject, template_name, recipients, template_id=None):
+    """Send bulk emails to multiple recipients.
+
+    If template_id is provided, this will render the EmailTemplate with
+    participant + event context for each recipient. Otherwise, it falls back
+    to a simple plain/HTML stub using the provided subject/template_name.
+    """
     from app.app import create_app
+    from jinja2 import Template
     app = create_app()
     
     with app.app_context():
         success_count = 0
         failed_count = 0
+
+        email_template = None
+        event = None
+
+        if template_id:
+            # Load event and email template once for all recipients
+            event = Event.query.get(event_id)
+            email_template = EmailTemplate.query.get(template_id)
+
+            if not event or not email_template:
+                # If we can't find the event or template, fall back to legacy behavior
+                current_app.logger.error(
+                    f"Bulk email: event or template not found "
+                    f"(event_id={event_id}, template_id={template_id}) - falling back to stub body"
+                )
+                email_template = None
         
         for recipient in recipients:
+            recipient_name = recipient.get('name', 'Participant')
+            recipient_email = recipient.get('email')
+
+            # Default values (legacy behavior)
+            rendered_subject = subject
+            body = f"Hello {recipient_name},\n\nYour ticket for the event."
+            html = f"<p>Hello {recipient_name},</p><p>Your ticket for the event.</p>"
+
+            # If a real EmailTemplate is provided, render from it
+            if email_template and event:
+                try:
+                    base_url = current_app.config.get('APP_URL', 'http://localhost:5000')
+                    unique_uuid = recipient.get('unique_url_uuid')
+
+                    context = {
+                        'participant': {
+                            'name': recipient_name,
+                            'email': recipient_email,
+                            'unique_url': f"{base_url}/ticket/{unique_uuid}" if unique_uuid else None,
+                            'uuid': unique_uuid
+                        },
+                        'event': {
+                            'name': event.name,
+                            'date': event.date.strftime('%B %d, %Y') if getattr(event, 'date', None) else '',
+                            'venue': getattr(event, 'venue', '') or 'TBA',
+                            'mode': getattr(event, 'mode', None)
+                        },
+                        'current_year': datetime.utcnow().year,
+                        'app_name': 'GateKeeper',
+                        'support_email': current_app.config.get('MAIL_DEFAULT_SENDER', 'support@example.com')
+                    }
+
+                    # Render subject and bodies from template
+                    subject_template = Template(email_template.subject)
+                    rendered_subject = subject_template.render(**context)
+
+                    html_template = Template(email_template.html_content)
+                    html = html_template.render(**context)
+
+                    # Render plain text or fallback
+                    if email_template.text_content:
+                        text_template = Template(email_template.text_content)
+                        body = text_template.render(**context)
+                    else:
+                        body = f"Hello {recipient_name},\n\nPlease see the details for {event.name}."
+                except Exception as e:
+                    # If rendering fails, log the error and fall back to legacy stub content
+                    current_app.logger.error(
+                        f"Error rendering bulk email template (template_id={template_id}): {str(e)}",
+                        exc_info=True
+                    )
+
             # Create email log
             email_log = EmailLog(
                 event_id=event_id,
-                recipient_email=recipient['email'],
-                subject=subject,
-                template_name=template_name,
+                recipient_email=recipient_email,
+                subject=rendered_subject,
+                template_name=email_template.name if email_template else template_name,
                 status='queued'
             )
             db.session.add(email_log)
             db.session.flush()
             
-            # Render email template
-            # TODO: Implement template rendering with participant data
-            body = f"Hello {recipient.get('name', 'Participant')},\n\nYour ticket for the event."
-            html = f"<p>Hello {recipient.get('name', 'Participant')},</p><p>Your ticket for the event.</p>"
-            
             # Send email
-            success, error = send_email(recipient['email'], subject, body, html)
+            success, error = send_email(recipient_email, rendered_subject, body, html)
             
             if success:
                 email_log.status = 'sent'

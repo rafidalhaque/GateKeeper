@@ -49,8 +49,16 @@ def import_csv_task(self, event_id, csv_content):
 
 
 @shared_task(bind=True)
-def send_bulk_emails_task(self, event_id, subject, template_name, recipients):
-    """Background task for bulk email sending"""
+def send_bulk_emails_task(self, event_id, subject, template_name, recipients, template_id=None):
+    """Background task for bulk email sending
+
+    Args:
+        event_id: Event ID
+        subject: Email subject (may be overridden by template)
+        template_name: Legacy template name string (kept for backwards compatibility/logging)
+        recipients: List of recipient dicts
+        template_id: Optional EmailTemplate ID to use for rendering
+    """
     from app.services.email_service import send_bulk_emails
     
     # Create job tracking record
@@ -66,7 +74,7 @@ def send_bulk_emails_task(self, event_id, subject, template_name, recipients):
     
     try:
         # Send emails
-        result = send_bulk_emails(event_id, subject, template_name, recipients)
+        result = send_bulk_emails(event_id, subject, template_name, recipients, template_id)
         
         # Update job status
         job.status = 'completed'
