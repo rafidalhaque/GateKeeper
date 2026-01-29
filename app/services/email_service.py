@@ -164,6 +164,8 @@ def send_bulk_emails(event_id, subject, template_name, recipients, template_id=N
 
         email_template = None
         event = None
+        # Import here to avoid circular imports at module load time
+        from app.models.events import Participant
 
         if template_id:
             # Load event and email template once for all recipients
@@ -193,6 +195,24 @@ def send_bulk_emails(event_id, subject, template_name, recipients, template_id=N
                     base_url = current_app.config.get('APP_URL', 'http://localhost:5000')
                     unique_uuid = recipient.get('unique_url_uuid')
 
+                    participant = None
+                    # Best-effort: hydrate full participant data for template context
+                    try:
+                        if unique_uuid:
+                            participant = Participant.query.filter_by(unique_url_uuid=unique_uuid).first()
+                        if not participant and recipient_email:
+                            participant = Participant.query.filter_by(event_id=event_id, email=recipient_email).first()
+                    except Exception:
+                        # If lookup fails for any reason, proceed with minimal context
+                        participant = None
+
+                    team_context = {'name': '', 'id': None}
+                    if participant and getattr(participant, 'team', None):
+                        team_context = {
+                            'name': participant.team.team_name,
+                            'id': participant.team.id
+                        }
+
                     context = {
                         'participant': {
                             'name': recipient_name,
@@ -206,10 +226,19 @@ def send_bulk_emails(event_id, subject, template_name, recipients, template_id=N
                             'venue': getattr(event, 'venue', '') or 'TBA',
                             'mode': getattr(event, 'mode', None)
                         },
+                        # Always include 'team' so templates using {{ team.name }} don't crash
+                        'team': team_context,
+                        # Convenience aliases used by some templates/designers
+                        'team_name': team_context.get('name') or '',
+                        'team_id': team_context.get('id'),
                         'current_year': datetime.utcnow().year,
                         'app_name': 'GateKeeper',
                         'support_email': current_app.config.get('MAIL_DEFAULT_SENDER', 'support@example.com')
                     }
+
+                    # Add custom fields if present (matches single-ticket email behavior)
+                    if participant and getattr(participant, 'custom_data', None):
+                        context['custom_fields'] = participant.custom_data
 
                     # Render subject and bodies from template
                     subject_template = Template(email_template.subject)
