@@ -47,7 +47,7 @@ Pillow>=10.4.0
 email-validator==2.1.0
 
 # HTTP requests (for Supabase)
-requests==2.31.0
+requests==2.33.0
 
 # CLI
 click==8.1.7
