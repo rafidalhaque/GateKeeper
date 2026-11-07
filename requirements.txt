@@ -4,7 +4,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.0.5
 Flask-CORS==4.0.0
 Flask-Swagger-UI==5.21.0
-Werkzeug==3.0.1
+Werkzeug==3.1.9
 
 # Database
 psycopg2-binary==2.9.11
